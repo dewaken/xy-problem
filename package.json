@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "setup:key": "bash scripts/setup-local-secret.sh",
     "build": "wrangler deploy --dry-run --outdir dist",
-    "deploy": "wrangler deploy"
+    "deploy": "echo '本番へは main に push すると Workers Builds がデプロイします（手元からはデプロイしない）。' >&2; exit 1"
   },
   "dependencies": {
     "hono": "^4.13.8"

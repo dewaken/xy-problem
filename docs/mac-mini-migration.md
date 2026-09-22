@@ -81,7 +81,7 @@ bun run build       # wrangler dry-run
 bun run dev         # http://localhost:8787 で実判定が HTTP 200 になること
 ```
 
-deploy の確認が必要なら `bun run deploy` のあと https://xy-problem.ken1030.workers.dev で実判定する。
+本番へのデプロイは `main` への push で Cloudflare Workers Builds が行う（手元からはデプロイしない）。確認は https://xy-problem.ken1030.workers.dev で実判定する。
 
 ## 7. MacBook Pro の後片付け（手順 6 が通ってから）
 
