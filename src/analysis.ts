@@ -64,7 +64,7 @@ const verdicts: Record<Verdict, { label: string; title: string; description: str
   borderline: { label: '目的も問題も、まだ形になっていません', title: '何に困っているのかを、先に言葉にしてみましょう。', description: '問題や目的には触れていますが、具体的に何が起きていて、どうなれば解決なのかが読み取れません。' },
   unlikely: { label: 'XY問題の可能性は低い', title: '起きていることや目的が書かれています。', description: '回答者が手段の良し悪しから検討できる材料があります。下の要素で欠けているものがあれば、補うとさらに伝わりやすくなります。' },
 }
-const notRequest = { title: '質問や相談ではないようです。', description: '回答や説明、情報の依頼として読めるため、XY問題の対象外と判断しました。相談したい側の文章を入力してください。' }
+const notRequest = { label: '判定対象外', title: '質問や相談ではないようです。', description: '回答や説明、情報の依頼として読めるため、XY問題の対象外と判断しました。相談したい側の文章を入力してください。' }
 
 const levelText: Record<Level, string> = { stated: '書かれている', vague: 'はっきりしない', absent: '書かれていない' }
 const elements = [
