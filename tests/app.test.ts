@@ -2,17 +2,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import app, { type Bindings } from '../src/index'
 
 const sample = 'ファイル形式を判定したいので、ファイル名の末尾3文字を取得する方法を教えてください。'
-function fixture() {
+type Probabilities = Record<string, number>
+const choice = (probabilities: Probabilities) => ({ type: 'choice', choice: Object.keys(probabilities)[0], confidence: 0.9, probabilities })
+// 依頼書 #1（Bot Manager / Cookie）で実Jevが返した確率に近い値
+function answers(overrides: Partial<Record<'symptom' | 'goal' | 'target' | 'ask', Probabilities>> & { tried?: number } = {}) {
   return {
-    model: 'jev-1.13.0',
-    answers: {
-      verdict: { type: 'choice', choice: 'suspected', confidence: 0.85, probabilities: { suspected: 0.9, unlikely: 0.02, insufficient: 0.08 } },
-      goal_missing: { type: 'noul', noul: 0.1 },
-      solution_fixation: { type: 'noul', noul: 0.95 },
-      untested_assumption: { type: 'noul', noul: 0.9 },
-    },
-    usage: { input_tokens: 500, output_tokens: 80 },
+    symptom: choice(overrides.symptom ?? { stated: 0, vague: 0.85, absent: 0.15 }),
+    goal: choice(overrides.goal ?? { stated: 0.01, vague: 0.1, absent: 0.89 }),
+    target: choice(overrides.target ?? { named: 1, general: 0, none: 0 }),
+    ask: choice(overrides.ask ?? { cause: 0.04, means: 0.96, advice: 0, not_request: 0 }),
+    tried: { type: 'noul', noul: overrides.tried ?? 0.27 },
   }
+}
+function fixture(overrides: Parameters<typeof answers>[0] = {}) {
+  return { model: 'jev-1.13.0', answers: answers(overrides), usage: { input_tokens: 500, output_tokens: 80 } }
 }
 function response(value: unknown, status = 200) {
   return new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } })
@@ -44,12 +47,17 @@ describe('analysis API', () => {
     const requestBody = JSON.parse(String(options?.body))
     expect(requestBody.model).toBe('jev-latest')
     expect(requestBody.state).toBe(sample)
-    expect(requestBody.questions.verdict.type).toBe('choice')
+    expect(Object.keys(requestBody.questions)).toEqual(['symptom', 'goal', 'target', 'tried', 'ask'])
     const result = await response.json() as any
-    expect(result.verdict).toBe('suspected')
-    expect(result.confidence).toBe(85)
-    expect(result.signals.map((s: any) => s.value)).toEqual([10, 95, 90])
-    expect(result.questions.length).toBeGreaterThan(0)
+    expect(result.verdict).toBe('strong')
+    expect(result).not.toHaveProperty('confidence')
+    expect(result.missing.map((m: any) => m.label)).toEqual(['実際に起きている問題', '最終的に実現したいこと'])
+    expect(result.elements).toEqual([
+      expect.objectContaining({ label: '実際に起きている問題', levelLabel: 'はっきりしない', probability: 85 }),
+      expect.objectContaining({ label: '最終的に実現したいこと', levelLabel: '書かれていない', probability: 89 }),
+      expect.objectContaining({ label: '試したこと・切り分けの結果', levelLabel: '書かれていない', probability: 73 }),
+    ])
+    expect(result.questions.length).toBe(3)
     expect(response.headers.get('Cache-Control')).toContain('no-store')
   })
   it.each([null, {}, { text: 2 }, { text: '短い' }, { text: ' '.repeat(20) }, { text: 'a'.repeat(3001) }])('rejects invalid input %j before calling Jev', async (body) => {
@@ -79,7 +87,7 @@ describe('analysis API', () => {
     delete bindings.JEV_API_KEY
     expect((await post({ text: sample }, bindings)).status).toBe(503)
   })
-  it.each([{}, { answers: {} }, { ...fixture(), answers: { ...fixture().answers, goal_missing: { type: 'noul', noul: 3 } } }])('rejects malformed provider responses', async (value) => {
+  it.each([{}, { answers: {} }, { ...fixture(), answers: { ...fixture().answers, tried: { type: 'noul', noul: 3 } } }, { ...fixture(), answers: { ...fixture().answers, goal: { type: 'noul', noul: 0.5 } } }])('rejects malformed provider responses', async (value) => {
     mockFetch(value)
     expect((await post({ text: sample })).status).toBe(502)
   })
@@ -102,11 +110,34 @@ describe('analysis API', () => {
     await vi.advanceTimersByTimeAsync(21000)
     expect((await pending).status).toBe(504)
   })
-  it.each(['unlikely', 'insufficient'])('preserves the %s verdict', async (verdict) => {
-    const value = fixture()
-    value.answers.verdict.choice = verdict
-    mockFetch(value)
-    const result = await post({ text: sample })
-    expect((await result.json() as any).verdict).toBe(verdict)
+})
+
+describe('verdict composition', () => {
+  async function verdictFor(overrides: Parameters<typeof answers>[0]) {
+    mockFetch(fixture(overrides))
+    return await (await post({ text: sample })).json() as any
+  }
+  it('flags a named target without a stated symptom as a strong suspicion (#1)', async () => {
+    expect((await verdictFor({})).verdict).toBe('strong')
+  })
+  it('flags asking for a specific means without a goal', async () => {
+    const result = await verdictFor({ target: { named: 0.1, general: 0.8, none: 0.1 } })
+    expect(result.verdict).toBe('suspected')
+  })
+  it('does not call it unlikely when neither symptom nor goal is stated (#5)', async () => {
+    const result = await verdictFor({ target: { named: 0.2, general: 0.8, none: 0 }, ask: { cause: 0, means: 0.05, advice: 0.95, not_request: 0 }, goal: { stated: 0.02, vague: 0.45, absent: 0.53 } })
+    expect(result.verdict).toBe('borderline')
+  })
+  it('treats a stated symptom as unlikely even when a product is named', async () => {
+    const result = await verdictFor({ symptom: { stated: 1, vague: 0, absent: 0 }, goal: { stated: 0.24, vague: 0.09, absent: 0.67 } })
+    expect(result.verdict).toBe('unlikely')
+    expect(result.missing.map((m: any) => m.label)).toEqual(['最終的に実現したいこと'])
+  })
+  it('keeps text from the answering side negative without asking follow-up questions (#6)', async () => {
+    const result = await verdictFor({ symptom: { stated: 0, vague: 0, absent: 1 }, goal: { stated: 0, vague: 0, absent: 1 }, target: { named: 0.42, general: 0.52, none: 0.06 }, ask: { cause: 0, means: 0.15, advice: 0, not_request: 0.85 } })
+    expect(result.verdict).toBe('unlikely')
+    expect(result.title).toBe('質問や相談ではないようです。')
+    expect(result.missing).toEqual([])
+    expect(result.questions).toEqual([])
   })
 })

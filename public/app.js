@@ -8,9 +8,9 @@ const loading = document.querySelector('#loading-state')
 const error = document.querySelector('#error')
 const live = document.querySelector('#live-status')
 const examples = {
-  technical: 'ファイル形式を判定したいので、ファイル名の末尾3文字を取得する方法を教えてください。',
-  work: '会議の日程調整を効率化したいです。全員のカレンダーを毎朝スクリーンショットで集めて、Excelに貼り付ける作業を自動化するにはどうすればいいですか？',
-  clear: '問い合わせへの初回返信を24時間以内にしたいです。現在は担当者が不明な問い合わせが放置されています。予算をかけず、5人のチームで担当を決めて対応状況を共有する方法を比較したいです。',
+  technical: '文字列の最後の3文字を取り出す方法を教えてください。',
+  infra: '最近、CDNの設定周りに何か変更はありましたでしょうか。不正Bot対策で出力するCookieのサイズが大きいようなのですが、これは以前からのものかどうか、ご存知でしょうか。',
+  infraRevised: 'Salesforceにアップした画像をサイト内から呼び出すと読み込めないことがあります。S3から RequestHeaderSectionTooLarge（上限8192バイト）が返っており、Cookieの合計がヘッダー上限を超えているのではないかと見ていますが、切り分けはできていません。確認すべき点があれば教えていただけますか。',
 }
 function updateCount() {
   document.querySelector('#character-count').textContent = `${input.value.length.toLocaleString()} / 3,000`
@@ -27,27 +27,29 @@ document.querySelectorAll('[data-example]').forEach((element) => {
 function render(data) {
   card.dataset.verdict = data.verdict
   document.querySelector('#verdict-badge').textContent = data.label
-  document.querySelector('#confidence').textContent = `${data.confidence}%`
   document.querySelector('#result-title').textContent = data.title
   document.querySelector('#result-description').textContent = data.description
+  const missing = document.querySelector('#missing-list')
+  missing.replaceChildren()
+  for (const item of data.missing) {
+    const row = document.createElement('li')
+    const label = document.createElement('b')
+    label.textContent = `「${item.label}」`
+    row.append(label, item.hint)
+    missing.append(row)
+  }
+  document.querySelector('#missing').hidden = !data.missing.length
   const signals = document.querySelector('#signals')
   signals.replaceChildren()
-  for (const signal of data.signals) {
+  for (const element of data.elements) {
     const row = document.createElement('div')
-    const heading = document.createElement('div')
-    heading.className = 'signal-heading'
+    row.className = 'signal-heading'
+    row.dataset.level = element.level
     const label = document.createElement('span')
-    label.textContent = signal.label
+    label.textContent = element.label
     const value = document.createElement('span')
-    value.textContent = `${signal.value}%`
-    heading.append(label, value)
-    const track = document.createElement('div')
-    track.className = 'signal-track'
-    const fill = document.createElement('div')
-    fill.className = 'signal-fill'
-    fill.style.width = `${Math.max(0, Math.min(100, signal.value))}%`
-    track.append(fill)
-    row.append(heading, track)
+    value.textContent = `${element.levelLabel}（${element.probability}%）`
+    row.append(label, value)
     signals.append(row)
   }
   const questions = document.querySelector('#follow-up-questions')
@@ -59,6 +61,7 @@ function render(data) {
   }
   result.hidden = false
   live.textContent = `判定が終わりました。${data.label}`
+  document.querySelector('.follow-up').hidden = !data.questions.length
   document.querySelector('#result-title').focus({ preventScroll: true })
   if (matchMedia('(max-width: 720px)').matches) card.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })
 }

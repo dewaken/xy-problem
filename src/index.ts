@@ -44,7 +44,7 @@ app.post('/api/analyze', async (c) => {
     }), timeout])
     if (!upstream.ok) {
       console.error('[jev] upstream rejected request', { status: upstream.status })
-      return c.json({ error: upstream.status === 401 || upstream.status === 403 ? 'Jev APIキーを確認してください。' : 'Jevに接続できませんでした。時間をおいてお試しください。' }, upstream.status === 401 || upstream.status === 403 ? 503 : 502)
+      return c.json({ error: upstream.status === 401 || upstream.status === 403 ? '判定サービスの設定を確認してください。' : '判定サービスに接続できませんでした。時間をおいてお試しください。' }, upstream.status === 401 || upstream.status === 403 ? 503 : 502)
     }
     response = await upstream.json()
   } catch (error) {
@@ -57,13 +57,13 @@ app.post('/api/analyze', async (c) => {
       message: safeMessage(error instanceof Error ? error.message : failure.message),
       causeName: typeof cause.name === 'string' ? cause.name : undefined,
     })
-    return c.json({ error: 'Jevによる判定を取得できませんでした。時間をおいてもう一度お試しください。' }, 502)
+    return c.json({ error: '判定を取得できませんでした。時間をおいてもう一度お試しください。' }, 502)
   } finally { clearTimeout(timer) }
   try {
     return c.json(parseAnalysis(response))
   } catch (error) {
     console.error('[jev] response validation failed', { name: error instanceof Error ? error.name : typeof error })
-    return c.json({ error: 'Jevの応答を読み取れませんでした。時間をおいてもう一度お試しください。' }, 502)
+    return c.json({ error: '判定結果を読み取れませんでした。時間をおいてもう一度お試しください。' }, 502)
   }
 })
 app.get('/api/health', (c) => c.json({ status: 'ok' }))

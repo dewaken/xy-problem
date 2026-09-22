@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="その質問、本当に解決したいことにつながっていますか？ Jevと一緒に、目的と手段を整理するXY問題チェッカー。" />
+    <meta name="description" content="その質問、本当に解決したいことにつながっていますか？ 目的と手段のすれ違いを見つけるXY問題チェッカー。" />
     <meta name="theme-color" content="#214e42" />
     <title>XY Lens — 問いを、ひとつ手前から。</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -34,9 +34,9 @@
           <form id="analyze-form">
             <div class="section-heading"><span class="step-number">01</span><h2>いま、聞きたいこと</h2><span class="small-label">YOUR QUESTION</span></div>
             <label class="input-label" for="question">質問や相談を、そのまま書いてみてください。</label>
-            <textarea id="question" name="question" minlength="10" maxlength="3000" required placeholder="例：ファイル形式を判定したいので、ファイル名の末尾3文字を取得する方法を教えてください。" aria-describedby="input-hint character-count"></textarea>
+            <textarea id="question" name="question" minlength="10" maxlength="3000" required placeholder="例：文字列の最後の3文字を取り出す方法を教えてください。" aria-describedby="input-hint character-count"></textarea>
             <div class="input-meta"><span id="input-hint">背景や本来の目的もあれば、一緒に。</span><span id="character-count">0 / 3,000</span></div>
-            <div class="examples"><span>例で試す</span><button type="button" data-example="technical">開発の相談 <span aria-hidden="true">↗</span></button><button type="button" data-example="work">仕事の相談 <span aria-hidden="true">↗</span></button><button type="button" data-example="clear">目的が明確な質問 <span aria-hidden="true">↗</span></button></div>
+            <div class="examples"><span>例で試す</span><button type="button" data-example="technical">開発の相談 <span aria-hidden="true">↗</span></button><button type="button" data-example="infra">インフラの相談 <span aria-hidden="true">↗</span></button><button type="button" data-example="infraRevised">インフラの相談（書き直し後） <span aria-hidden="true">↗</span></button></div>
             <div class="submit-row"><p>入力内容は判定のためCloudflare・TypeSafe AIに送信されます。このアプリでは履歴を保存しません。</p><button class="primary-button" id="submit-button" type="submit"><span id="button-label">問いをチェック</span><span id="button-icon" aria-hidden="true">↗</span></button></div>
             <p id="error" class="error-message" role="alert" hidden></p>
           </form>
@@ -44,14 +44,15 @@
 
         <div class="result-card" id="result-card" aria-busy="false">
           <div class="section-heading"><span class="step-number">02</span><h2>問いの見え方</h2><span class="small-label">REFLECTION</span></div>
-          <div id="empty-state" class="empty-state"><div class="lens-symbol" aria-hidden="true"><span></span><span></span></div><h3>少し離れると、見えてくる。</h3><p>質問を入力すると、目的と手段の関係を<br />3つの観点からチェックします。</p><div class="signal-tags"><span>目的の明確さ</span><span>手段への固執</span><span>前提の検証</span></div></div>
-          <div id="loading-state" class="empty-state" hidden><span class="spinner" aria-hidden="true"></span><h3>問いを読み解いています</h3><p>目的、手段、前提を確認しています。</p></div>
+          <div id="empty-state" class="empty-state"><div class="lens-symbol" aria-hidden="true"><span></span><span></span></div><h3>少し離れると、見えてくる。</h3><p>質問を入力すると、回答に必要な要素が<br />書かれているかをチェックします。</p><div class="signal-tags"><span>起きている問題</span><span>実現したいこと</span><span>試したこと</span></div></div>
+          <div id="loading-state" class="empty-state" hidden><span class="spinner" aria-hidden="true"></span><h3>問いを読み解いています</h3><p>起きている問題、目的、試したことを確認しています。</p></div>
           <div id="result" hidden>
-            <div class="verdict-row"><span id="verdict-badge" class="verdict-badge"></span><span class="confidence">モデル確信度 <b id="confidence"></b></span></div>
+            <div class="verdict-row"><span id="verdict-badge" class="verdict-badge"></span></div>
             <h3 id="result-title" class="result-title" tabindex="-1"></h3><p id="result-description" class="result-description"></p>
-            <div id="signals" class="signals"></div>
+            <div id="missing" class="missing"><h4>この文章に書かれていないこと</h4><ul id="missing-list"></ul><p>追記すると、より適切な回答が得られる可能性があります。</p></div>
+            <div class="elements"><p class="elements-heading">要素ごとの読み取り結果<span>（%はAIがそう推定した確率）</span></p><div id="signals" class="signals"></div></div>
             <div class="follow-up"><p class="eyebrow">NEXT QUESTION</p><h4>次は、こんな問いから。</h4><ul id="follow-up-questions"></ul></div>
-            <p class="result-note">AIの推定です。確信度は正解率ではありません。確認質問は評価に対応する定型文です。</p>
+            <p class="result-note">判定は、上の要素の組み合わせから決めています。%は各要素についてのAIの推定確率で、判定の正解率ではありません。確認質問は、欠けている要素に対応する定型文です。</p>
           </div>
           <p id="live-status" class="sr-only" role="status" aria-live="polite"></p>
         </div>
@@ -59,6 +60,6 @@
 
       <section id="about" class="about-section"><div><p class="eyebrow">UNDERSTANDING THE XY PROBLEM</p><h2>「どうやるか」の前に、<br />「何をしたいか」。</h2></div><div class="about-copy"><p>本当は <strong>Xを解決したい</strong>のに、自分で考えた手段 <strong>Yのやり方だけを質問してしまう</strong>。それがXY問題です。</p><p>一歩戻って目的や背景を共有すると、もっとシンプルな解決策が見つかるかもしれません。これは質問の良し悪しを採点する道具ではなく、問いを整理するための小さなレンズです。</p></div></section>
     </main>
-    <footer><span class="footer-brand">XY Lens <span>小さな問い直し、大きな前進。</span></span><a href="https://typesafe.ai/" target="_blank" rel="noopener noreferrer">Powered by Jev <span aria-hidden="true">↗</span></a></footer>
+    <footer><span class="footer-brand">XY Lens <span>小さな問い直し、大きな前進。</span></span></footer>
   </body>
 </html>
