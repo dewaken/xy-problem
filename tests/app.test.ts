@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import app, { type Bindings } from '../src/index'
 
-const sample = 'ファイル形式を判定したいので、ファイル名の末尾3文字を取得する方法を教えてください。'
+// 依頼書 #1 の文。下の偽の応答（answers の既定値）は、この文に実際の Jev が返した確率に近い値にしている。
+const sample = 'Bot Manager の設定変更はあったか。Cookie サイズが大きいようだが以前からか'
 type Probabilities = Record<string, number>
 const choice = (probabilities: Probabilities) => ({ type: 'choice', choice: Object.keys(probabilities)[0], confidence: 0.9, probabilities })
-// 依頼書 #1（Bot Manager / Cookie）で実Jevが返した確率に近い値
 function answers(overrides: Partial<Record<'symptom' | 'goal' | 'target' | 'ask', Probabilities>> & { tried?: number } = {}) {
   return {
     symptom: choice(overrides.symptom ?? { stated: 0, vague: 0.85, absent: 0.15 }),

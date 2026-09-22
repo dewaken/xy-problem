@@ -70,37 +70,49 @@ const elements = [
   { key: 'goal', label: '最終的に実現したいこと', hint: 'それが実現すると何ができるようになるのかを書いてください。', question: 'それが実現したら、最終的に何ができるようになりますか？' },
 ] as const
 
-function record(value: unknown): Record<string, unknown> {
+// Jev の応答は信用せず、形と値を1段ずつ確かめてから使う。おかしければ例外を出し、API は 502 を返す。
+
+// オブジェクトであることを確かめ、中身を読める型にして返す。
+function asObject(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid Jev response')
   return value as Record<string, unknown>
 }
+// 0〜1 の数値であることを確かめて返す。
 function probability(value: unknown): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) throw new Error('Invalid probability')
   return value
 }
-function choice<K extends string>(answers: Record<string, unknown>, key: string, names: readonly K[]): Record<K, number> {
-  const answer = record(answers[key])
+// choice 型の答えから、names に挙げた選択肢ごとの確率の表を取り出す。
+// Jev が選んだ1つ（choice）ではなく確率の表を使うのは、合成の計算で選ばれなかった選択肢の確率も使うため。
+function choiceProbabilities<K extends string>(answers: Record<string, unknown>, key: string, names: readonly K[]): Record<K, number> {
+  const answer = asObject(answers[key])
   if (answer.type !== 'choice') throw new Error('Invalid answer type')
-  const probabilities = record(answer.probabilities)
-  return Object.fromEntries(names.map((name) => [name, probability(probabilities[name])])) as Record<K, number>
+  const probabilities = asObject(answer.probabilities)
+  const entries = names.map((name) => [name, probability(probabilities[name])])
+  // Object.fromEntries はキーの型を保てないため、ここで型を付け直す。
+  return Object.fromEntries(entries) as Record<K, number>
 }
-function noul(answers: Record<string, unknown>, key: string): number {
-  const answer = record(answers[key])
+// noul 型（はい/いいえ）の答えから、「はい」の確率を取り出す。
+function noulProbability(answers: Record<string, unknown>, key: string): number {
+  const answer = asObject(answers[key])
   if (answer.type !== 'noul') throw new Error('Invalid answer type')
   return probability(answer.noul)
 }
 const levels = ['stated', 'vague', 'absent'] as const
 const percent = (value: number) => Math.round(value * 100)
+// 要素が「書かれている」とみなす基準。行の色と「書かれていないこと」の一覧の両方でこれを使う。
+const isStated = (probability: number) => probability >= 0.5
 
 // 合成前の確率。評価スクリプト（scripts/eval-cases.ts）からも使う。
 export function rawScores(value: unknown) {
-  const answers = record(record(value).answers)
+  const response = asObject(value)
+  const answers = asObject(response.answers)
   return {
-    symptom: choice(answers, 'symptom', levels),
-    goal: choice(answers, 'goal', levels),
-    target: choice(answers, 'target', ['named', 'general', 'none'] as const),
-    ask: choice(answers, 'ask', ['cause', 'means', 'advice', 'not_request'] as const),
-    tried: noul(answers, 'tried'),
+    symptom: choiceProbabilities(answers, 'symptom', levels),
+    goal: choiceProbabilities(answers, 'goal', levels),
+    target: choiceProbabilities(answers, 'target', ['named', 'general', 'none'] as const),
+    ask: choiceProbabilities(answers, 'ask', ['cause', 'means', 'advice', 'not_request'] as const),
+    tried: noulProbability(answers, 'tried'),
   }
 }
 
@@ -128,12 +140,12 @@ export function parseAnalysis(value: unknown) {
   // 3行とも「書かれている可能性」（stated の確率）で揃える。vague は stated を下げる形で反映される。
   const found = elements.map((element) => {
     const p = detected[element.key].stated
-    return { key: element.key, label: element.label, stated: p >= 0.5, probability: percent(p) }
+    return { label: element.label, stated: isStated(p), probability: percent(p) }
   })
-  const lacking = excluded ? [] : elements.filter((element) => detected[element.key].stated < 0.5)
+  const lacking = excluded ? [] : elements.filter((element) => !isStated(detected[element.key].stated))
   const missing = lacking.map((element) => ({ label: element.label, hint: element.hint }))
   const questions: string[] = lacking.map((element) => element.question)
-  if (!excluded && tried < 0.5 && verdict !== 'unlikely') questions.push('すでに試したことや、確認して原因ではないと分かったことはありますか？')
+  if (!excluded && !isStated(tried) && verdict !== 'unlikely') questions.push('すでに試したことや、確認して原因ではないと分かったことはありますか？')
 
   return {
     verdict,
@@ -142,7 +154,7 @@ export function parseAnalysis(value: unknown) {
     missing,
     elements: [
       ...found,
-      { key: 'tried', label: '試したこと・切り分けの結果', stated: tried >= 0.5, probability: percent(tried) },
+      { label: '試したこと・切り分けの結果', stated: isStated(tried), probability: percent(tried) },
     ],
     questions,
   }
