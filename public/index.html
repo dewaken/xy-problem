@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="その質問、本当に解決したいことにつながっていますか？ Jevと一緒に、目的と手段を整理するXY問題チェッカー。" />
+    <meta name="theme-color" content="#214e42" />
+    <title>XY Lens — 問いを、ひとつ手前から。</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="XY Lens ホーム"><span class="brand-mark">x<span>y</span></span> XY Lens</a>
+      <a class="about-link" href="#about">XY問題とは <span aria-hidden="true">↗</span></a>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div class="intro-copy">
+          <p class="eyebrow"><span class="status-dot"></span> A LITTLE CLARITY FOR YOUR NEXT QUESTION</p>
+          <h1 id="page-title">問いを、<br /><span>ひとつ手前から。</span></h1>
+          <p class="lead">解きたいのは、その問題ですか。<br />目的と手段のすれ違いを見つけて、<br class="mobile-break" />質問をもっと良い出発点に。</p>
+        </div>
+        <div class="concept" aria-label="Xは本来の目的、Yは思いついた手段。目的から考えてみよう。">
+          <span class="concept-note">a step back, a clearer path.</span>
+          <div class="concept-flow"><div class="concept-node node-x"><b>X</b><span>本来の目的</span></div><span class="concept-arrow" aria-hidden="true">⟶</span><div class="concept-node node-y"><b>Y</b><span>思いついた手段</span></div></div>
+          <span class="back-arrow" aria-hidden="true">↶</span><span class="concept-caption">ここに立ち戻ってみる</span>
+        </div>
+      </section>
+
+      <section class="workspace" aria-label="質問をチェックする">
+        <div class="editor-card">
+          <form id="analyze-form">
+            <div class="section-heading"><span class="step-number">01</span><h2>いま、聞きたいこと</h2><span class="small-label">YOUR QUESTION</span></div>
+            <label class="input-label" for="question">質問や相談を、そのまま書いてみてください。</label>
+            <textarea id="question" name="question" minlength="10" maxlength="3000" required placeholder="例：ファイル形式を判定したいので、ファイル名の末尾3文字を取得する方法を教えてください。" aria-describedby="input-hint character-count"></textarea>
+            <div class="input-meta"><span id="input-hint">背景や本来の目的もあれば、一緒に。</span><span id="character-count">0 / 3,000</span></div>
+            <div class="examples"><span>例で試す</span><button type="button" data-example="technical">開発の相談 <span aria-hidden="true">↗</span></button><button type="button" data-example="work">仕事の相談 <span aria-hidden="true">↗</span></button><button type="button" data-example="clear">目的が明確な質問 <span aria-hidden="true">↗</span></button></div>
+            <div class="submit-row"><p>入力内容は判定のためCloudflare・TypeSafe AIに送信されます。このアプリでは履歴を保存しません。</p><button class="primary-button" id="submit-button" type="submit"><span id="button-label">問いをチェック</span><span id="button-icon" aria-hidden="true">↗</span></button></div>
+            <p id="error" class="error-message" role="alert" hidden></p>
+          </form>
+        </div>
+
+        <div class="result-card" id="result-card" aria-busy="false">
+          <div class="section-heading"><span class="step-number">02</span><h2>問いの見え方</h2><span class="small-label">REFLECTION</span></div>
+          <div id="empty-state" class="empty-state"><div class="lens-symbol" aria-hidden="true"><span></span><span></span></div><h3>少し離れると、見えてくる。</h3><p>質問を入力すると、目的と手段の関係を<br />3つの観点からチェックします。</p><div class="signal-tags"><span>目的の明確さ</span><span>手段への固執</span><span>前提の検証</span></div></div>
+          <div id="loading-state" class="empty-state" hidden><span class="spinner" aria-hidden="true"></span><h3>問いを読み解いています</h3><p>目的、手段、前提を確認しています。</p></div>
+          <div id="result" hidden>
+            <div class="verdict-row"><span id="verdict-badge" class="verdict-badge"></span><span class="confidence">モデル確信度 <b id="confidence"></b></span></div>
+            <h3 id="result-title" class="result-title" tabindex="-1"></h3><p id="result-description" class="result-description"></p>
+            <div id="signals" class="signals"></div>
+            <div class="follow-up"><p class="eyebrow">NEXT QUESTION</p><h4>次は、こんな問いから。</h4><ul id="follow-up-questions"></ul></div>
+            <p class="result-note">AIの推定です。確信度は正解率ではありません。確認質問は評価に対応する定型文です。</p>
+          </div>
+          <p id="live-status" class="sr-only" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section id="about" class="about-section"><div><p class="eyebrow">UNDERSTANDING THE XY PROBLEM</p><h2>「どうやるか」の前に、<br />「何をしたいか」。</h2></div><div class="about-copy"><p>本当は <strong>Xを解決したい</strong>のに、自分で考えた手段 <strong>Yのやり方だけを質問してしまう</strong>。それがXY問題です。</p><p>一歩戻って目的や背景を共有すると、もっとシンプルな解決策が見つかるかもしれません。これは質問の良し悪しを採点する道具ではなく、問いを整理するための小さなレンズです。</p></div></section>
+    </main>
+    <footer><span class="footer-brand">XY Lens <span>小さな問い直し、大きな前進。</span></span><a href="https://typesafe.ai/" target="_blank" rel="noopener noreferrer">Powered by Jev <span aria-hidden="true">↗</span></a></footer>
+  </body>
+</html>
