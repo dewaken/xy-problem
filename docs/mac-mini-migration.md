@@ -1,13 +1,13 @@
 # Mac mini（Orca）への作業環境移行手順
 
 MacBook Pro のディスク容量不足のため、以降の開発を Mac mini の Orca 環境で行う。
-コードはすべて GitHub（`dewaken/xy-problem`, private）にある。Git に入っていないのはローカル用 APIキー（`.dev.vars`）だけ。
+コードはすべて GitHub（`dewaken/xy-problem`, private）にある。Git に入っていないのはローカル用 APIキーだけ。キーはリポジトリの外、`~/.config/typesafe/env`（`TYPESAFE_API_KEY`）に置く。
 
 ## 0. 移行前の状態（MacBook Pro）
 
 - `main` = `origin/main`（未 push の変更なし）
 - 公開中: https://xy-problem.ken1030.workers.dev （Cloudflare アカウント `dewa1030@gmail.com`、`JEV_API_KEY` は Worker Secret に登録済み。移行で触る必要はない）
-- Git 対象外で引き継ぐもの: `.dev.vars`（`JEV_API_KEY`）のみ。`node_modules/` `.wrangler/` `dist/` は再生成できる
+- Git 対象外で引き継ぐもの: `~/.config/typesafe/env`（`TYPESAFE_API_KEY`）のみ。`node_modules/` `.wrangler/` `dist/` は再生成できる
 
 ## 1. Mac mini にツールを入れる
 
@@ -56,7 +56,9 @@ bunx wrangler login     # ブラウザで dewa1030@gmail.com を承認
 bunx wrangler whoami    # アカウントを確認
 ```
 
-## 5. ローカル用 APIキー（`.dev.vars`）
+## 5. ローカル用 APIキー（`~/.config/typesafe/env`）
+
+`bun run dev` は `~/.config/typesafe/env` の `TYPESAFE_API_KEY` を、Git 管理の `dev.env` でアプリ用の `JEV_API_KEY` に読み替えて使う。キーがリポジトリの外にあるので、Orca が作る worktree でもそのまま動く。リポジトリ直下の `.dev.vars` は使わない（残っていれば消す）。
 
 どちらかの方法で用意する。キーの値をチャット・Git・メモに貼らない。
 
@@ -64,11 +66,11 @@ bunx wrangler whoami    # アカウントを確認
 - **B: Tailscale（Taildrop）でファイルを送る** — 同じ tailnet の中だけで暗号化されて届く。Mac mini の Tailscale 上の名前は `usermac-mini`。
   ```sh
   # MacBook Pro で
-  tailscale file cp ~/orca/projects/xy-problem/.dev.vars usermac-mini:
-  # Mac mini で（リポジトリ直下で受け取る）
-  cd ~/orca/projects/xy-problem && tailscale file get . && chmod 600 .dev.vars
+  tailscale file cp ~/.config/typesafe/env usermac-mini:
+  # Mac mini で受け取り、所定の場所へ置く
+  mkdir -p ~/.config/typesafe && tailscale file get ~/.config/typesafe/ && chmod 600 ~/.config/typesafe/env
   ```
-  `tailscale` コマンドが見つからない場合は `/Applications/Tailscale.app/Contents/MacOS/Tailscale` を使う。Mac の GUI 版では、Finder の共有メニューから Taildrop で送ることもできる（その場合は `~/Downloads` に届くので、リポジトリ直下へ移して `chmod 600`）。
+  `tailscale` コマンドが見つからない場合は `/Applications/Tailscale.app/Contents/MacOS/Tailscale` を使う。Mac の GUI 版では、Finder の共有メニューから Taildrop で送ることもできる（その場合は `~/Downloads/env` に届くので、`~/.config/typesafe/env` へ移して `chmod 600`）。
 
 ## 6. Mac mini で動作確認
 
@@ -89,7 +91,7 @@ git status && git fetch && git status -sb   # 未 push の変更がないこと�
 ```
 
 - Orca アプリから `xy-problem` リポジトリの登録を外す
-- フォルダをゴミ箱へ移す（`.dev.vars` もいっしょに消える。先に手順 5 を済ませておく）:
+- フォルダをゴミ箱へ移す（APIキーは `~/.config/typesafe/env` にあり、フォルダを消しても残る。他で使っていなければ、Mac mini に届いたのを確かめてから消してよい）:
   `mv ~/orca/projects/xy-problem ~/.Trash/`
 - 手元で gh の dewaken アカウントが不要なら: `gh auth logout --hostname github.com --user dewaken`
 

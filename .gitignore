@@ -4,5 +4,4 @@ dist/
 .dev.vars*
 .env*
 !.env.example
-!.dev.vars.example
 artifacts/

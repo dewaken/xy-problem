@@ -17,7 +17,7 @@ bun run setup:key
 bun run dev
 ```
 
-ローカルURLは http://localhost:8787 。判定には有効なTypeSafe AI APIキーが必要です。`bun run setup:key`はキーを非表示で読み取り、Git対象外の`.dev.vars`へ保存します。ローカルで偽の判定を返すモードは設けていません。
+ローカルURLは http://localhost:8787 。判定には有効なTypeSafe AI APIキーが必要です。`bun run setup:key`はキーを非表示で読み取り、リポジトリ外の`~/.config/typesafe/env`へ`TYPESAFE_API_KEY`として保存します（同じファイルの他の行は残す）。`bun run dev`はこのファイルと、アプリ用の名前`JEV_API_KEY`へ読み替える`dev.env`（秘密情報なし・Git管理）を読み込むため、Orcaのどのworktreeでも同じキーで動きます。ローカルで偽の判定を返すモードは設けていません。
 
 ## 検証
 
@@ -34,7 +34,7 @@ bun run build
 1. https://dash.cloudflare.com/sign-up で登録し、確認メールでメールアドレスを認証する。
 2. `bunx wrangler login` を実行し、ブラウザでWranglerとの接続を許可する。
 3. TypeSafe AIコンソールでAPIキーを作る。
-4. `bun run setup:key`でローカルにAPIキーを安全に保存し、`bun run dev`から実判定を確認する。
+4. `bun run setup:key`でローカル（`~/.config/typesafe/env`）にAPIキーを安全に保存し、`bun run dev`から実判定を確認する。
 5. キーをCloudflareに保存する: `bunx wrangler secret put JEV_API_KEY`。表示された入力欄にキーを入力する。
 6. `bun run deploy` で公開する。
 7. `https://xy-problem.ken1030.workers.dev` で画面と実判定を確認する。
