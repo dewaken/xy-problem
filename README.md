@@ -43,7 +43,8 @@ bun run build
 
 ## ファイル
 
-- `src/index.ts`: Hono API、入力制限、レート制限、タイムアウト
+- `src/index.ts`: Hono API、入力制限、レート制限
+- `src/jev.ts`: Jev（TypeSafe API）の呼び出し、タイムアウト、エラーの変換
 - `src/analysis.ts`: Jevに渡す質問と選択肢、応答の検証、総合判定の合成
 - `scripts/eval-cases.ts`: 実Jevで判定を確認する評価ケース
 - `public/`: レスポンシブUI、定型の確認質問の表示
