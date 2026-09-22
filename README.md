@@ -36,8 +36,9 @@ bun run build
 3. TypeSafe AIコンソールでAPIキーを作る。
 4. `bun run setup:key`でローカル（`~/.config/typesafe/env`）にAPIキーを安全に保存し、`bun run dev`から実判定を確認する。
 5. キーをCloudflareに保存する: `bunx wrangler secret put JEV_API_KEY`。表示された入力欄にキーを入力する。
-6. `bun run deploy` で公開する。
-7. `https://xy-problem.ken1030.workers.dev` で画面と実判定を確認する。
+6. Cloudflareの管理画面（Workers & Pages → xy-problem → 設定 → ビルド）でGitHubの `dewaken/xy-problem` を連携する。ブランチは `main`、ビルドコマンドは `bun run test && bun run typecheck`、デプロイコマンドは `npx wrangler deploy`。
+7. `main` にpush（PRのマージを含む）すると、Workers Buildsがテストと型チェックを通したうえで本番にデプロイする。手元からはデプロイしない（`bun run deploy` は案内を出して止まる）。
+8. `https://xy-problem.ken1030.workers.dev` で画面と実判定を確認する。問題があれば管理画面の Deployments から前のバージョンにロールバックする。
 
 独自ドメインは不要。Jev APIキーはブラウザへ渡さず、Workers SecretからTypeSafe APIを呼び出す。
 
