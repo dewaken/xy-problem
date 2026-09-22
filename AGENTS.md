@@ -21,7 +21,8 @@ bun run setup:key    # TypeSafe API キーを ~/.config/typesafe/env に保存
 
 ## 構成
 
-- `src/index.ts`：`POST /api/analyze`。入力検証（10〜3,000文字、16KB、同一オリジン、JSON）、Rate Limit（`RATE_LIMITER` バインディング、IP ごと 10回/分）、20秒タイムアウトの順に処理する。ログに入力本文や Jev の生エラーを出さない（本文はマスクする）。
+- `src/index.ts`：`POST /api/analyze`。前段のチェックを名前付きのミドルウェアとして並べ、`app.post(...)` の引数の順に実行する（本文16KB → 同一オリジン → JSON → 文字数 → 設定 → Rate Limit）。壊れた JSON は Hono の `validator` が `HTTPException(400)` を投げるので、`app.onError` で 400 に変換している。
+- `src/jev.ts`：Jev の呼び出し（20秒タイムアウト）。失敗は利用者向けのメッセージとステータスだけを持つ `JevError` に変える。ログに入力本文や Jev の生エラーを出さない（本文は伏せる）。
 - `src/analysis.ts`：判定ロジックの本体。
   - `buildInput`：Jev への質問を組み立てる。
   - `rawScores`：応答を検証し、確率を取り出す。
@@ -47,6 +48,11 @@ Jev は文章を生成しない。事前に定義した質問と選択肢に対�
   - 典型的な XY 問題を陰性と言い切るコストが高い。そのため `unlikely` は「症状か目的の少なくとも一方が明記されている」場合（または回答側の発言）に限る。
 - 総合判定を Jev に別途尋ねてはいけない。表示する要素と総合判定が矛盾しないことが、この設計の前提になっている。
 - 判定基準の背景と受け入れ条件は `docs/xy-judge-fix-instructions.md` にある。criteria や合成ルールを変えたら、`bun run test` に加えて `bun run eval` で実際の Jev の結果を確認する。
+
+## コードの書き方
+
+- 条件・メッセージ・ステータスを1行に詰め込まない。チェックは1つずつ改行して書き、数値の根拠や設計の理由（なぜ20秒か、なぜ伏せるか）はコメントに残す。既存のコードに詰め込まれた箇所があっても、それに合わせない。
+- `public/styles.css` は整形済みの形で編集する（1行に詰めない）。
 
 ## UI の決まり
 
