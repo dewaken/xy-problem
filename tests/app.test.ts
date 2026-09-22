@@ -140,6 +140,7 @@ describe('verdict composition', () => {
   it('keeps text from the answering side negative without asking follow-up questions (#6)', async () => {
     const result = await verdictFor({ symptom: { stated: 0, vague: 0, absent: 1 }, goal: { stated: 0, vague: 0, absent: 1 }, target: { named: 0.42, general: 0.52, none: 0.06 }, ask: { cause: 0, means: 0.15, advice: 0, not_request: 0.85 } })
     expect(result.verdict).toBe('unlikely')
+    expect(result.label).toBe('判定対象外')
     expect(result.title).toBe('質問や相談ではないようです。')
     expect(result.missing).toEqual([])
     expect(result.questions).toEqual([])

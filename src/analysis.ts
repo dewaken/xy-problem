@@ -63,7 +63,12 @@ const verdicts: Record<Verdict, { label: string; title: string; description: str
   borderline: { label: '目的も問題も、まだ形になっていません', title: '何に困っているのかを、先に言葉にしてみましょう。', description: '問題や目的には触れていますが、具体的に何が起きていて、どうなれば解決なのかが読み取れません。' },
   unlikely: { label: 'XY問題の可能性は低い', title: '起きていることや目的が書かれています。', description: '回答者が手段の良し悪しから検討できる材料があります。下の要素で欠けているものがあれば、補うとさらに伝わりやすくなります。' },
 }
-const notRequest = { title: '質問や相談ではないようです。', description: '回答や説明、情報の依頼として読めるため、XY問題の対象外と判断しました。相談したい側の文章を入力してください。' }
+// verdict は 'unlikely' のままなので、label も上書きしないと「XY問題の可能性は低い」のバッジが残る（issue #5）。
+const notRequest = {
+  label: '判定対象外',
+  title: '質問や相談ではないようです。',
+  description: '回答や説明、情報の依頼として読めるため、XY問題の対象外と判断しました。相談したい側の文章を入力してください。',
+}
 
 const elements = [
   { key: 'symptom', label: '実際に起きている問題', hint: 'エラー、表示されない、遅いなど、実際に何が起きているかを書いてください。', question: '実際にどんな現象が起きていますか？（エラー、画面の状態、影響を受けている人や作業）' },
