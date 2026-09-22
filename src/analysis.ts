@@ -56,7 +56,6 @@ export function buildInput(text: string): JevInput {
   }
 }
 
-type Level = 'stated' | 'vague' | 'absent'
 export type Verdict = 'strong' | 'suspected' | 'borderline' | 'unlikely'
 const verdicts: Record<Verdict, { label: string; title: string; description: string }> = {
   strong: { label: 'XY問題の疑いが強い', title: '手段は具体的なのに、起きている問題が書かれていません。', description: '調べる対象がすでに絞り込まれています。その絞り込みが外れていると、回答者がいくら調べても本当の原因に届きません。' },
@@ -66,7 +65,6 @@ const verdicts: Record<Verdict, { label: string; title: string; description: str
 }
 const notRequest = { title: '質問や相談ではないようです。', description: '回答や説明、情報の依頼として読めるため、XY問題の対象外と判断しました。相談したい側の文章を入力してください。' }
 
-const levelText: Record<Level, string> = { stated: '書かれている', vague: 'はっきりしない', absent: '書かれていない' }
 const elements = [
   { key: 'symptom', label: '実際に起きている問題', hint: 'エラー、表示されない、遅いなど、実際に何が起きているかを書いてください。', question: '実際にどんな現象が起きていますか？（エラー、画面の状態、影響を受けている人や作業）' },
   { key: 'goal', label: '最終的に実現したいこと', hint: 'それが実現すると何ができるようになるのかを書いてください。', question: 'それが実現したら、最終的に何ができるようになりますか？' },
@@ -92,9 +90,6 @@ function noul(answers: Record<string, unknown>, key: string): number {
   return probability(answer.noul)
 }
 const levels = ['stated', 'vague', 'absent'] as const
-function top<K extends string>(p: Record<K, number>): K {
-  return (Object.keys(p) as K[]).reduce((a, b) => (p[b] > p[a] ? b : a))
-}
 const percent = (value: number) => Math.round(value * 100)
 
 // 合成前の確率。評価スクリプト（scripts/eval-cases.ts）からも使う。
@@ -130,10 +125,10 @@ export function parseAnalysis(value: unknown) {
     : 'borderline'
 
   const detected = { symptom, goal }
+  // 3行とも「書かれている可能性」（stated の確率）で揃える。vague は stated を下げる形で反映される。
   const found = elements.map((element) => {
-    const p = detected[element.key]
-    const level = top(p)
-    return { key: element.key, label: element.label, level, levelLabel: levelText[level], probability: percent(p[level]) }
+    const p = detected[element.key].stated
+    return { key: element.key, label: element.label, stated: p >= 0.5, probability: percent(p) }
   })
   const lacking = excluded ? [] : elements.filter((element) => detected[element.key].stated < 0.5)
   const missing = lacking.map((element) => ({ label: element.label, hint: element.hint }))
@@ -147,7 +142,7 @@ export function parseAnalysis(value: unknown) {
     missing,
     elements: [
       ...found,
-      { key: 'tried', label: '試したこと・切り分けの結果', level: tried >= 0.5 ? 'stated' : 'absent', levelLabel: tried >= 0.5 ? '書かれている' : '書かれていない', probability: percent(tried >= 0.5 ? tried : 1 - tried) },
+      { key: 'tried', label: '試したこと・切り分けの結果', stated: tried >= 0.5, probability: percent(tried) },
     ],
     questions,
   }

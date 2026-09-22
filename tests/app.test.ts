@@ -53,9 +53,9 @@ describe('analysis API', () => {
     expect(result).not.toHaveProperty('confidence')
     expect(result.missing.map((m: any) => m.label)).toEqual(['実際に起きている問題', '最終的に実現したいこと'])
     expect(result.elements).toEqual([
-      expect.objectContaining({ label: '実際に起きている問題', levelLabel: 'はっきりしない', probability: 85 }),
-      expect.objectContaining({ label: '最終的に実現したいこと', levelLabel: '書かれていない', probability: 89 }),
-      expect.objectContaining({ label: '試したこと・切り分けの結果', levelLabel: '書かれていない', probability: 73 }),
+      expect.objectContaining({ label: '実際に起きている問題', stated: false, probability: 0 }),
+      expect.objectContaining({ label: '最終的に実現したいこと', stated: false, probability: 1 }),
+      expect.objectContaining({ label: '試したこと・切り分けの結果', stated: false, probability: 27 }),
     ])
     expect(result.questions.length).toBe(3)
     expect(response.headers.get('Cache-Control')).toContain('no-store')
@@ -127,6 +127,10 @@ describe('verdict composition', () => {
   it('does not call it unlikely when neither symptom nor goal is stated (#5)', async () => {
     const result = await verdictFor({ target: { named: 0.2, general: 0.8, none: 0 }, ask: { cause: 0, means: 0.05, advice: 0.95, not_request: 0 }, goal: { stated: 0.02, vague: 0.45, absent: 0.53 } })
     expect(result.verdict).toBe('borderline')
+  })
+  it('shows every element on the same axis: the probability that it is stated', async () => {
+    const result = await verdictFor({ goal: { stated: 0.41, vague: 0.15, absent: 0.44 }, tried: 0.85 })
+    expect(result.elements.map((e: any) => [e.stated, e.probability])).toEqual([[false, 0], [false, 41], [true, 85]])
   })
   it('treats a stated symptom as unlikely even when a product is named', async () => {
     const result = await verdictFor({ symptom: { stated: 1, vague: 0, absent: 0 }, goal: { stated: 0.24, vague: 0.09, absent: 0.67 } })

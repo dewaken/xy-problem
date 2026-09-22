@@ -44,11 +44,11 @@ function render(data) {
   for (const element of data.elements) {
     const row = document.createElement('div')
     row.className = 'signal-heading'
-    row.dataset.level = element.level
+    row.dataset.stated = element.stated
     const label = document.createElement('span')
     label.textContent = element.label
     const value = document.createElement('span')
-    value.textContent = `${element.levelLabel}（${element.probability}%）`
+    value.textContent = `書かれている可能性 ${element.probability}%`
     row.append(label, value)
     signals.append(row)
   }
