@@ -3,13 +3,17 @@ import { bodyLimit } from 'hono/body-limit'
 import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
 import { validator } from 'hono/validator'
-import { parseAnalysis } from './analysis'
-import { askJev, JevError } from './jev'
+import { check } from './check'
+import { discord } from './discord'
 
-type RateLimiter = { limit(options: { key: string }): Promise<{ success: boolean }> }
+export type RateLimiter = { limit(options: { key: string }): Promise<{ success: boolean }> }
 export type Bindings = {
   JEV_API_KEY?: string
   RATE_LIMITER?: RateLimiter
+  // Discord アプリの Public Key（16進）。Interactions Endpoint の署名検証に使う。
+  DISCORD_PUBLIC_KEY?: string
+  // Discord から使ってよいユーザー ID（カンマ区切り）。未設定なら誰も使えない。
+  DISCORD_ALLOWED_USER_IDS?: string
 }
 type Env = { Bindings: Bindings; Variables: { apiKey: string; rateLimiter: RateLimiter } }
 
@@ -88,20 +92,14 @@ const rateLimit = createMiddleware<Env>(async (c, next) => {
 
 app.post('/api/analyze', limitBody, sameOrigin, requireJson, analyzeInput, requireConfig, rateLimit, async (c) => {
   const { text } = c.req.valid('json')
-  let response: unknown
-  try {
-    response = await askJev(c.get('apiKey'), text)
-  } catch (error) {
-    if (error instanceof JevError) return c.json({ error: error.message }, error.status)
-    throw error
+  const result = await check(c.get('apiKey'), text)
+  if (!result.ok) {
+    return c.json({ error: result.error }, result.status)
   }
-  try {
-    return c.json(parseAnalysis(response))
-  } catch (error) {
-    console.error('[jev] response validation failed', { name: error instanceof Error ? error.name : typeof error })
-    return c.json({ error: '判定結果を読み取れませんでした。時間をおいてもう一度お試しください。' }, 502)
-  }
+  return c.json(result.analysis)
 })
+
+app.route('/discord', discord)
 
 app.get('/api/health', (c) => c.json({ status: 'ok' }))
 

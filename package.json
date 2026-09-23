@@ -8,6 +8,7 @@
     "dev": "wrangler dev --env-file $HOME/.config/typesafe/env --env-file dev.env",
     "test": "vitest run",
     "eval": "bun --env-file $HOME/.config/typesafe/env scripts/eval-cases.ts",
+    "discord:register": "bun --env-file $HOME/.config/xy-problem/discord.env scripts/discord-register.ts",
     "typecheck": "tsc --noEmit",
     "setup:key": "bash scripts/setup-local-secret.sh",
     "build": "wrangler deploy --dry-run --outdir dist",
