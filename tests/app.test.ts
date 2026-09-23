@@ -124,6 +124,10 @@ describe('verdict composition', () => {
     const result = await verdictFor({ target: { named: 0.1, general: 0.8, none: 0.1 } })
     expect(result.verdict).toBe('suspected')
   })
+  it('still flags asking for a specific means when the goal is only vague (issue #4)', async () => {
+    const result = await verdictFor({ target: { named: 0.1, general: 0.8, none: 0.1 }, goal: { stated: 0.1, vague: 0.7, absent: 0.2 } })
+    expect(result.verdict).toBe('suspected')
+  })
   it('does not call it unlikely when neither symptom nor goal is stated (#5)', async () => {
     const result = await verdictFor({ target: { named: 0.2, general: 0.8, none: 0 }, ask: { cause: 0, means: 0.05, advice: 0.95, not_request: 0 }, goal: { stated: 0.02, vague: 0.45, absent: 0.53 } })
     expect(result.verdict).toBe('borderline')
