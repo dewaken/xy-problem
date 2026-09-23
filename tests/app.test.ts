@@ -136,6 +136,20 @@ describe('verdict composition', () => {
     const result = await verdictFor({ goal: { stated: 0.41, vague: 0.15, absent: 0.44 }, tried: 0.85 })
     expect(result.elements.map((e: any) => [e.stated, e.probability])).toEqual([[false, 0], [false, 41], [true, 85]])
   })
+  // stated が最大確率の選択肢でも 50% 未満なら「書かれていない」側に揃える。
+  // 行の色と「書かれていないこと」の一覧が別の軸で決まると、同じ要素が両方に出る（issue #3）。
+  it('keeps each row consistent with the list of what is not written (#3)', async () => {
+    const result = await verdictFor({
+      symptom: { stated: 0.49, vague: 0.26, absent: 0.25 },
+      goal: { stated: 0.5, vague: 0.2, absent: 0.3 },
+    })
+    const rows = result.elements.slice(0, 2).map((e: any) => [e.label, e.stated, e.probability])
+    expect(rows).toEqual([
+      ['実際に起きている問題', false, 49],
+      ['最終的に実現したいこと', true, 50],
+    ])
+    expect(result.missing.map((m: any) => m.label)).toEqual(['実際に起きている問題'])
+  })
   it('treats a stated symptom as unlikely even when a product is named', async () => {
     const result = await verdictFor({ symptom: { stated: 1, vague: 0, absent: 0 }, goal: { stated: 0.24, vague: 0.09, absent: 0.67 } })
     expect(result.verdict).toBe('unlikely')
