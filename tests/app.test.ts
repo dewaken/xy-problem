@@ -156,6 +156,18 @@ describe('verdict composition', () => {
     expect(result.label).toBe('XY問題の可能性は低い')
     expect(result.missing.map((m: any) => m.label)).toEqual(['最終的に実現したいこと'])
   })
+  // 目的 X を書いたうえで手段 Y を名指しして相談する文は、XY問題を避けた書き方の典型（issue #13）。
+  // 値は「5秒ごとのリロードを考えていますが…」の文に実際の Jev が返した確率に近づけている。
+  it('treats a stated goal as unlikely even when a named means is asked about (issue #13)', async () => {
+    const result = await verdictFor({
+      symptom: { stated: 0.16, vague: 0.12, absent: 0.72 },
+      goal: { stated: 0.99, vague: 0, absent: 0.01 },
+      target: { named: 0.75, general: 0.24, none: 0.01 },
+      ask: { cause: 0.02, means: 0.74, advice: 0.24, not_request: 0 },
+    })
+    expect(result.verdict).toBe('unlikely')
+    expect(result.missing.map((m: any) => m.label)).toEqual(['実際に起きている問題'])
+  })
   it('keeps text from the answering side negative without asking follow-up questions (#6)', async () => {
     const result = await verdictFor({ symptom: { stated: 0, vague: 0, absent: 1 }, goal: { stated: 0, vague: 0, absent: 1 }, target: { named: 0.42, general: 0.52, none: 0.06 }, ask: { cause: 0, means: 0.15, advice: 0, not_request: 0.85 } })
     expect(result.verdict).toBe('unlikely')
