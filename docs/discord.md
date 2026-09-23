@@ -46,7 +46,20 @@ bunx wrangler secret put DISCORD_PUBLIC_KEY        # 手順1で控えた Public 
 bunx wrangler secret put DISCORD_ALLOWED_USER_IDS  # 自分の Discord ユーザー ID（複数ならカンマ区切り）
 ```
 
-自分のユーザー ID は、Discord の「設定 → 詳細設定 → 開発者モード」をオンにしてから、自分のアイコンを右クリック →「ユーザーIDをコピー」で取れる。
+`DISCORD_ALLOWED_USER_IDS` には、**ユーザー ID（17〜19桁の数字だけの値）** を入れる。次の値と取り違えやすいので注意する。
+
+| 入れる値 | 例 | |
+|---|---|---|
+| ユーザー ID | `123456789012345678` のような数字 | ✅ これを入れる |
+| ユーザー名 | `your_name` のような名前 | ❌ 使えない |
+| Application ID | 手順1で控えた値 | ❌ アプリの ID で、人の ID ではない |
+
+ユーザー ID の調べ方：
+
+1. Discord の「ユーザー設定 → 詳細設定」で「開発者モード」をオンにする
+2. 自分のアイコン（または名前）を右クリックし、「ユーザーIDをコピー」を選ぶ
+
+アプリを自分で作った場合は、`bun run discord:register`（手順5）が表示する「アプリの所有者」の ID と同じになる。
 
 ### 4. Interactions Endpoint URL を設定する
 
@@ -58,17 +71,35 @@ https://xy-problem.ken1030.workers.dev/discord/interactions
 
 保存に失敗する場合は、手順3の `DISCORD_PUBLIC_KEY` が正しいかを確かめる。
 
-### 5. コマンドを登録し、アプリをインストールする
+### 5. コマンドを登録する
 
 ```sh
 bun run discord:register
 ```
 
-「Installation」の Install Link を開き、「自分のアプリに追加」を選ぶ。メニューに出ないときは、Discord を再読み込みする（Ctrl+R / ⌘+R）。
+「登録しました：XY問題チェック」のあとに、次の手順で使うインストール用のリンクと、アプリの所有者のユーザー ID が表示される。
+
+### 6. アプリを自分のアカウントに追加する
+
+手順5で表示されたリンクを開き、「アプリを追加」→「承認」と進む。リンクの形は次のとおり（`（Application ID）` を置き換える）。
+
+```
+https://discord.com/oauth2/authorize?client_id=（Application ID）&integration_type=1&scope=applications.commands
+```
+
+### 7. 試す
+
+1. 自分が投稿した10文字以上のメッセージを右クリック（スマホは長押し）→「アプリ」→「XY問題チェック」を選ぶ
+2. 「考え中」が出て、数秒後に判定結果に変われば完了（結果は自分にだけ見える）
+
+- メニューに「XY問題チェック」が出ないときは、Discord を再読み込みする（⌘+R / Ctrl+R）
+- 試しやすい例文：「文字列の最後の3文字を取り出す方法を教えてください。」（「XY問題の疑いあり」になる）
 
 ## うまく動かないとき
 
-- 「このアプリを使えるユーザーとして登録されていません。」：`DISCORD_ALLOWED_USER_IDS` に自分の ID が入っているか
+- 「このアプリを使えるユーザーとして登録されていません。」：`DISCORD_ALLOWED_USER_IDS` にユーザー ID（数字）が入っているかを確かめる。ユーザー名や Application ID を入れていないか（手順3）。直すときは `bunx wrangler secret put DISCORD_ALLOWED_USER_IDS` で上書きする
 - 「判定サービスの設定が完了していません。」：Worker Secret の `JEV_API_KEY` があるか
 - 「考え中」のまま変わらない：`bunx wrangler tail` でログを見る。ログには本文を出さず、ステータスだけを出す
-- 「本文のないメッセージはチェックできません」と出るのに本文がある：Discord から本文が届いていない。Developer Portal の「Bot」で「Message Content Intent」をオンにして試す（Issue #17 の「実機で確認すること」）
+- Interactions Endpoint URL を保存できない：`DISCORD_PUBLIC_KEY` が手順1の Public Key と同じか
+
+右クリック版は、Developer Portal の「Message Content Intent」がオフのままで本文を受け取れる（2026-09-23 に実機で確認）。この設定が要るのは、投稿を自動で拾う常駐 bot（#18）のほう。

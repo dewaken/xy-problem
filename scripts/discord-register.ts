@@ -25,3 +25,25 @@ if (!response.ok) {
 }
 const registered = await response.json() as { name: string }[]
 console.log(`登録しました：${registered.map((command) => command.name).join('、')}`)
+
+// 登録のあとに何をすればよいかが分かるように、次の手順をここで示す（docs/discord.md の手順6・7）。
+// 許可ユーザーにユーザー名を入れる取り違えが起きたため、入れるべきユーザー ID も表示する。
+const installUrl = `https://discord.com/oauth2/authorize?client_id=${applicationId}&integration_type=1&scope=applications.commands`
+console.log('')
+console.log('次に、このリンクを開いて「アプリを追加」→「承認」と進んでください。')
+console.log(installUrl)
+
+const application = await fetch('https://discord.com/api/v10/applications/@me', {
+  headers: { Authorization: `Bot ${botToken}` },
+})
+if (application.ok) {
+  const { owner } = await application.json() as { owner?: { id: string; username: string } }
+  if (owner) {
+    console.log('')
+    console.log(`アプリの所有者：${owner.username}（ユーザー ID：${owner.id}）`)
+    console.log('Worker Secret の DISCORD_ALLOWED_USER_IDS には、ユーザー名ではなく、このユーザー ID を入れてください。')
+  }
+}
+
+console.log('')
+console.log('追加したら、自分のメッセージを右クリック →「アプリ」→「XY問題チェック」で試せます。')
