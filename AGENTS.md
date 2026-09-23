@@ -2,7 +2,7 @@
 
 This file provides guidance to coding agents (Claude Code, Codex, etc.) when working with code in this repository.
 
-XY Lens：日本語の質問・相談文が「XY問題」になっていないかを判定する Web アプリ。Hono + TypeScript を Cloudflare Workers で動かし、判定には TypeSafe AI の Jev（System One API）を使う。パッケージ管理は Bun。
+XY問題チェッカー：日本語の質問・相談文が「XY問題」になっていないかを判定する Web アプリ。Hono + TypeScript を Cloudflare Workers で動かし、判定には TypeSafe AI の Jev（System One API）を使う。パッケージ管理は Bun。
 
 ## コマンド
 

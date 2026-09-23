@@ -1,4 +1,4 @@
-# XY Lens
+# XY問題チェッカー
 
 質問文の目的と手段をTypeSafe AIのJevで評価する日本語Webアプリ。
 Hono + TypeScript + Cloudflare Workers。判定はTypeSafe APIで行い、依存管理にはBunを使用する。
