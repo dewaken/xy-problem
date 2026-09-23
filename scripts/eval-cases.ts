@@ -6,7 +6,9 @@ const positive: Verdict[] = ['strong', 'suspected']
 const cases: { id: string; text: string; expect: Verdict[] }[] = [
   { id: '#1', text: 'Bot Manager の設定変更はあったか。Cookie サイズが大きいようだが以前からか', expect: positive },
   { id: '#2', text: 'インフラチームには Bot Manager の cookie 書き込み適正化をチェックいただきたい', expect: positive },
-  { id: '#3', text: 'デプロイ先が分かれる。そのためパスの書き換えが Akamai で必要になる認識', expect: positive },
+  // issue #4 で挙がった #2 の全文。症状が vague で製品を名指ししているので、ex-infra と同じく strong が先に成立する。
+  { id: '#2-full', text: '最近、Cookieの合計が8kbを超える方が多くなってきているようなので、インフラチームには Akamai Bot Manager での cookie周りの書き込みが適正化をチェック頂ければと思っています。', expect: positive },
+  { id: '#3',text: 'デプロイ先が分かれる。そのためパスの書き換えが Akamai で必要になる認識', expect: positive },
   { id: '#4', text: 'リソースを借りるにあたり工数感の目安を立てていただけないか', expect: [...positive, 'borderline'] },
   { id: '#5', text: 'このプロプランで本当にいいのか、セキュリティや設定の面で', expect: ['borderline', ...positive] },
   { id: '#6', text: 'どのパスをどのドメインに向けたいかという情報が必要になります', expect: ['unlikely'] },
