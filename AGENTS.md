@@ -15,6 +15,7 @@ bun run build        # wrangler deploy --dry-run
 bun run eval         # 実際の Jev に評価ケースを投げる。ケース数分の API 利用が発生する
 bun run eval '#1' ex-infra   # ケース ID を指定して一部だけ実行
 bun run setup:key    # TypeSafe API キーを ~/.config/typesafe/env に保存
+bun run discord:register   # Discord に「XY問題チェック」コマンドを登録（~/.config/xy-problem/discord.env を読み込む）
 ```
 
 ローカルの API キーはリポジトリの外、`~/.config/typesafe/env` の `TYPESAFE_API_KEY` に置く。`dev.env`（Git 管理、秘密情報なし）が、これをアプリ側の名前 `JEV_API_KEY` に読み替える。本番では Worker Secret の `JEV_API_KEY` を使う。偽の判定を返すモードはない。
@@ -22,6 +23,8 @@ bun run setup:key    # TypeSafe API キーを ~/.config/typesafe/env に保存
 ## 構成
 
 - `src/index.ts`：`POST /api/analyze`。前段のチェックを名前付きのミドルウェアとして並べ、`app.post(...)` の引数の順に実行する（本文16KB → 同一オリジン → JSON → 文字数 → 設定 → Rate Limit）。壊れた JSON は Hono の `validator` が `HTTPException(400)` を投げるので、`app.onError` で 400 に変換している。
+- `src/check.ts`：画面の API と Discord で共通の判定処理（Jev の呼び出し → 応答の検証 → 表示用データ）。失敗は利用者向けのメッセージとステータスにして返す。
+- `src/discord.ts`：`POST /discord/interactions`（Discord のメッセージコマンド「XY問題チェック」）。署名を検証し、3秒以内に「考え中」を返してから `waitUntil` で判定し、返信を書き換える。設定の手順は `docs/discord.md`。
 - `src/jev.ts`：Jev の呼び出し（20秒タイムアウト）。失敗は利用者向けのメッセージとステータスだけを持つ `JevError` に変える。ログに入力本文や Jev の生エラーを出さない（本文は伏せる）。
 - `src/analysis.ts`：判定ロジックの本体。
   - `buildInput`：Jev への質問を組み立てる。
@@ -60,6 +63,7 @@ Jev は文章を生成しない。事前に定義した質問と選択肢に対�
 - 総合的な確信度は表示しない。要素の%は3行とも「書かれている可能性」（stated の確率）に揃える。最大確率の選択肢を出すと、行ごとに数値の意味が変わって比べられなくなる（issue #2）。判定の正解率ではないことが画面上で分かるようにする。
 - 「例文で試す」のボタンは、それぞれ別の判定になるようにする（現在は疑いあり／疑いが強い／可能性は低い）。例文を変えたら `scripts/eval-cases.ts` のケースも更新し、eval で判定を確かめる。
 - 入力履歴や DB は持たない。
+- Discord の返信（`discordMessage`）も、画面と同じ決まりに従う（「Jev」を出さない、送信先を書く、%は3行とも「書かれている可能性」）。
 
 ## 公開
 
