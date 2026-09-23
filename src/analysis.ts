@@ -155,6 +155,8 @@ export function parseAnalysis(value: unknown) {
 
   return {
     verdict,
+    // 判定対象外は verdict としては unlikely だが、画面では「可能性は低い」と同じ色にしない。
+    excluded,
     ...verdicts[verdict],
     ...(excluded ? notRequest : {}),
     missing,
