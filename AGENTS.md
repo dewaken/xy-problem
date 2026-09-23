@@ -65,6 +65,7 @@ Jev は文章を生成しない。事前に定義した質問と選択肢に対�
 
 `main` への push（PR のマージを含む）で、Cloudflare Workers Builds が https://xy-problem.ken1030.workers.dev にデプロイする（ビルドコマンド `bun run test && bun run typecheck`、デプロイコマンド `npx wrangler deploy`）。つまり **main へのマージは本番公開と同じ**。
 
+- ブランチ名は `{feature,bugfix,chore}/{Issue番号}-xxx-yyy`。ブランチを作るときは `.agents/branch-naming.md` を読む。
 - 手元から `wrangler deploy` しない。手元の未 push の変更が本番に入るため。`bun run deploy` はそれを防ぐため、案内を出して止まるようにしてある。
 - 戻すときは、管理画面の Deployments から前のバージョンにロールバックする（コードだけが戻り、Worker Secret は戻らない）。
 GitHub のアカウント設定と、別の環境への移行手順は `docs/mac-mini-migration.md` を参照。
