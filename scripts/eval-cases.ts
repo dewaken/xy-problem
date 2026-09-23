@@ -17,6 +17,11 @@ const cases: { id: string; text: string; expect: Verdict[] }[] = [
   { id: 'ex-infra', text: '最近、CDNの設定周りに何か変更はありましたでしょうか。不正Bot対策で出力するCookieのサイズが大きいようなのですが、これは以前からのものかどうか、ご存知でしょうか。', expect: ['strong'] },
   { id: 'ex-infra-good', text: 'Salesforceにアップした画像をサイト内から呼び出すと読み込めないことがあります。S3から RequestHeaderSectionTooLarge（上限8192バイト）が返っており、Cookieの合計がヘッダー上限を超えているのではないかと見ていますが、切り分けはできていません。確認すべき点があれば教えていただけますか。', expect: ['unlikely'] },
   { id: 'ex-clear', text: '問い合わせへの初回返信を24時間以内にしたいです。現在は担当者が不明な問い合わせが放置されています。予算をかけず、5人のチームで担当を決めて対応状況を共有する方法を比較したいです。', expect: ['unlikely'] },
+  // issue #13：手段 Y だけを尋ねる質問と、目的 X を添えて書き直した質問の組。
+  { id: '13-web-y', text: 'JavaScriptで5秒ごとにページをリロードする方法を教えてください', expect: positive },
+  { id: '13-web-xy', text: 'サーバー側のデータが更新されたら、ユーザーがページを再読み込みしなくても最新情報を画面に反映したいです。\n5秒ごとのリロードを考えていますが、より適切な実装方法はありますか？', expect: ['unlikely'] },
+  { id: '13-ops-y', text: 'Excelファイルを毎朝自動でメール添付する方法はありますか？', expect: positive },
+  { id: '13-ops-xy', text: 'チームメンバーが毎朝、最新の売上状況を簡単に確認できるようにしたいです。\nExcelをメール添付で自動送信する方法を考えていますが、他に適した方法があれば教えてください。', expect: ['unlikely'] },
   { id: 'ctl-symptom', text: 'Salesforce にアップロードした画像が、社外ユーザーの画面でだけ表示されません。ブラウザの開発者ツールでは画像リクエストが 403 になっています。原因の切り分け方を相談させてください。', expect: ['unlikely'] },
 ]
 

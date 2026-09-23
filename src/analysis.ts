@@ -120,15 +120,18 @@ export function parseAnalysis(value: unknown) {
   const { symptom, goal, target, ask, tried } = rawScores(value)
 
   // 要素の確率から総合判定を導く（独立に総合判定を尋ねないので、表示する要素と矛盾しない）。
-  // strong: 対象を名指ししているのに症状が明記されていない。絞り込みが外れていれば回答者は原因に届かない。
+  // strong: 対象を名指ししているのに、症状も目的も明記されていない。絞り込みが外れていれば回答者は原因に届かない。
   // suspected: 特定手段を尋ねているのに、症状も目的も明記されていない。
+  // strong も目的を見る。目的が書かれていれば、回答者は名指しされた手段より良い方法を提案できる。
+  // 目的を見ないと「X を実現したい。Y を考えているが、他に良い方法は？」という
+  // XY問題を避けた書き方ほど strong になってしまう（issue #13）。
   // 症状と目的は同じく「stated でない」（vague を含む）で見る。goal.absent だけを見ると、
   // 目的が vague と判定されたときに suspected が成立しなくなる（issue #4）。
   // 典型例を陰性と断言するコストが高いため、陰性は「症状か目的の少なくとも一方が明記されている」場合に限る。
   const notStated = 1 - symptom.stated
   const goalNotStated = 1 - goal.stated
   const scores = {
-    strong: target.named * notStated,
+    strong: target.named * goalNotStated * notStated,
     suspected: ask.means * goalNotStated * notStated,
     stated: 1 - (1 - symptom.stated) * (1 - goal.stated),
   }
