@@ -1,3 +1,5 @@
+import { messages, type Locale } from './i18n'
+
 type Question =
   | { type: 'choice'; instructions: string; criteria: Record<string, string> }
   | { type: 'noul'; instructions: string; criteria: { true: string; false: string } }
@@ -57,18 +59,8 @@ export function buildInput(text: string): JevInput {
 }
 
 export type Verdict = 'strong' | 'suspected' | 'borderline' | 'unlikely'
-const verdicts: Record<Verdict, { label: string; title: string; description: string }> = {
-  strong: { label: 'XY問題の疑いが強い', title: '手段は具体的なのに、起きている問題が書かれていません。', description: '調べる対象がすでに絞り込まれています。その絞り込みが外れていると、回答者がいくら調べても本当の原因に届きません。' },
-  suspected: { label: 'XY問題の疑いあり', title: 'その手段で、何を実現したいのでしょうか。', description: '特定のやり方について尋ねていますが、最終的に何をしたいのかが書かれていません。目的が分かると、別のより良い方法が見つかることがあります。' },
-  borderline: { label: '目的も問題も、まだ形になっていません', title: '何に困っているのかを、先に言葉にしてみましょう。', description: '問題や目的には触れていますが、具体的に何が起きていて、どうなれば解決なのかが読み取れません。' },
-  unlikely: { label: 'XY問題の可能性は低い', title: '起きていることや目的が書かれています。', description: '回答者が手段の良し悪しから検討できる材料があります。下の要素で欠けているものがあれば、補うとさらに伝わりやすくなります。' },
-}
-const notRequest = { label: '判定対象外', title: '質問や相談ではないようです。', description: '回答や説明、情報の依頼として読めるため、XY問題の対象外と判断しました。相談したい側の文章を入力してください。' }
-
-const elements = [
-  { key: 'symptom', label: '実際に起きている問題', hint: 'エラー、表示されない、遅いなど、実際に何が起きているかを書いてください。', question: '実際にどんな現象が起きていますか？（エラー、画面の状態、影響を受けている人や作業）' },
-  { key: 'goal', label: '最終的に実現したいこと', hint: 'それが実現すると何ができるようになるのかを書いてください。', question: 'それが実現したら、最終的に何ができるようになりますか？' },
-] as const
+// 画面に出す要素（症状・目的）。文言は src/i18n.ts に言語ごとに持つ。
+const elementKeys = ['symptom', 'goal'] as const
 
 // Jev の応答は信用せず、形と値を1段ずつ確かめてから使う。おかしければ例外を出し、API は 502 を返す。
 
@@ -116,8 +108,9 @@ export function rawScores(value: unknown) {
   }
 }
 
-export function parseAnalysis(value: unknown) {
+export function parseAnalysis(value: unknown, locale: Locale = 'ja') {
   const { symptom, goal, target, ask, tried } = rawScores(value)
+  const text = messages(locale)
 
   // 要素の確率から総合判定を導く（独立に総合判定を尋ねないので、表示する要素と矛盾しない）。
   // strong: 対象を名指ししているのに、症状も目的も明記されていない。絞り込みが外れていれば回答者は原因に届かない。
@@ -144,25 +137,24 @@ export function parseAnalysis(value: unknown) {
 
   const detected = { symptom, goal }
   // 3行とも「書かれている可能性」（stated の確率）で揃える。vague は stated を下げる形で反映される。
-  const found = elements.map((element) => {
-    const p = detected[element.key].stated
-    return { label: element.label, stated: isStated(p), probability: percent(p) }
+  const found = elementKeys.map((key) => {
+    const p = detected[key].stated
+    return { label: text.elements[key].label, stated: isStated(p), probability: percent(p) }
   })
-  const lacking = excluded ? [] : elements.filter((element) => !isStated(detected[element.key].stated))
-  const missing = lacking.map((element) => ({ label: element.label, hint: element.hint }))
-  const questions: string[] = lacking.map((element) => element.question)
-  if (!excluded && !isStated(tried) && verdict !== 'unlikely') questions.push('すでに試したことや、確認して原因ではないと分かったことはありますか？')
+  const lacking = excluded ? [] : elementKeys.filter((key) => !isStated(detected[key].stated))
+  const missing = lacking.map((key) => ({ label: text.elements[key].label, hint: text.elements[key].hint }))
+  const questions: string[] = lacking.map((key) => text.elements[key].question)
+  if (!excluded && !isStated(tried) && verdict !== 'unlikely') questions.push(text.tried.question)
 
   return {
     verdict,
     // 判定対象外は verdict としては unlikely だが、画面では「可能性は低い」と同じ色にしない。
     excluded,
-    ...verdicts[verdict],
-    ...(excluded ? notRequest : {}),
+    ...(excluded ? text.notRequest : text.verdicts[verdict]),
     missing,
     elements: [
       ...found,
-      { label: '試したこと・切り分けの結果', stated: isStated(tried), probability: percent(tried) },
+      { label: text.tried.label, stated: isStated(tried), probability: percent(tried) },
     ],
     questions,
   }

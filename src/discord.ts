@@ -1,6 +1,7 @@
 import { Hono, type Context } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { check, type Analysis, type CheckResult } from './check'
+import { localeFromDiscord, messages, type Locale } from './i18n'
 import type { Bindings } from './index'
 
 type Env = { Bindings: Bindings }
@@ -30,9 +31,14 @@ export const COMMAND_NAME = 'XY問題チェック'
 // integration_types の 0 はサーバーへのインストール、1 はユーザーへのインストール。
 // ユーザーにインストールすれば、bot を入れていないサーバーでも使える。
 // contexts の 0 はサーバー、1 は bot との DM、2 はグループ DM などその他の場所。
+// 英語設定の Discord ではメニューに英語名を出す。interaction の data.name は既定の名前（日本語）のまま届く。
 export const commands = [
   {
     name: COMMAND_NAME,
+    name_localizations: {
+      'en-US': 'XY Problem Check',
+      'en-GB': 'XY Problem Check',
+    },
     type: CommandType.MESSAGE,
     integration_types: [0, 1],
     contexts: [0, 1, 2],
@@ -45,6 +51,8 @@ type Interaction = {
   type: number
   token: string
   application_id: string
+  // 実行した人の Discord の言語設定（例：ja、en-US）。返信の言語に使う。
+  locale?: string
   member?: { user?: DiscordUser }
   user?: DiscordUser
   data?: {
@@ -66,24 +74,25 @@ const colors = {
 
 // 判定結果を Discord のメッセージ（埋め込み）にする。常駐 bot（#18）からも使う。
 // 表示の決まりは画面と同じ。「Jev」を出さず、送信先を書き、%は3行とも「書かれている可能性」にする。
-export function discordMessage(analysis: Analysis, messageUrl?: string) {
+export function discordMessage(analysis: Analysis, locale: Locale, messageUrl?: string) {
+  const text = messages(locale).discord
   const fields: { name: string; value: string }[] = []
   if (analysis.missing.length) {
     fields.push({
-      name: 'この文章に書かれていないこと',
+      name: text.missingField,
       value: analysis.missing.map((item) => `・**${item.label}**\n${item.hint}`).join('\n'),
     })
   }
   if (analysis.questions.length) {
     fields.push({
-      name: '回答する人から、こう聞き返されそうです',
+      name: text.questionsField,
       value: analysis.questions.map((question) => `> ${question}`).join('\n'),
     })
   }
   fields.push({
-    name: '読み取った要素',
+    name: text.elementsField,
     value: analysis.elements
-      .map((element) => `${element.stated ? '✅' : '⬜'} ${element.label}：書かれている可能性 ${element.probability}%`)
+      .map((element) => `${element.stated ? '✅' : '⬜'} ${text.elementRow(element.label, element.probability)}`)
       .join('\n'),
   })
   return {
@@ -94,9 +103,7 @@ export function discordMessage(analysis: Analysis, messageUrl?: string) {
         description: `**${analysis.title}**\n${analysis.description}`,
         color: analysis.excluded ? colors.excluded : colors[analysis.verdict],
         fields,
-        footer: {
-          text: '判定のため Cloudflare・TypeSafe AI に送信しました。%は各要素が文章に書かれているとAIが推定した確率で、判定の正解率ではありません。',
-        },
+        footer: { text: text.footer },
       },
     ],
     allowed_mentions: { parse: [] },
@@ -141,15 +148,15 @@ function reply(c: Context<Env>, content: string) {
 }
 
 // 判定して、先に返した「考え中」の返信を結果で書き換える。応答を返したあとに waitUntil で動く。
-async function completeCheck(interaction: Interaction, apiKey: string, text: string) {
+async function completeCheck(interaction: Interaction, apiKey: string, text: string, locale: Locale) {
   let result: CheckResult
   try {
-    result = await check(apiKey, text)
+    result = await check(apiKey, text, locale)
   } catch {
-    result = { ok: false, status: 502, error: '判定を取得できませんでした。時間をおいてもう一度お試しください。' }
+    result = { ok: false, status: 502, error: messages(locale).errors.jevFailed }
   }
   const payload = result.ok
-    ? discordMessage(result.analysis)
+    ? discordMessage(result.analysis, locale)
     : { content: result.error, allowed_mentions: { parse: [] } }
   // interaction の token は15分有効で、この書き換えには bot の token がいらない。
   const url = `https://discord.com/api/v10/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`
@@ -168,49 +175,52 @@ async function completeCheck(interaction: Interaction, apiKey: string, text: str
 }
 
 async function handleCheckCommand(c: Context<Env>, interaction: Interaction) {
+  const locale = localeFromDiscord(interaction.locale)
+  const text = messages(locale).discord
+  const errors = messages(locale).errors
   // サーバーでは member.user、DM では user に、実行した人が入る。
   const user = interaction.member?.user ?? interaction.user
   // 判定サービスの利用料を守るため、許可したユーザーだけが使える。未設定なら誰も使えない。
   if (!user || !allowedUsers(c.env?.DISCORD_ALLOWED_USER_IDS).has(user.id)) {
-    return reply(c, 'このアプリを使えるユーザーとして登録されていません。')
+    return reply(c, text.notAllowed)
   }
 
   const targetId = interaction.data?.target_id
   const message = targetId ? interaction.data?.resolved?.messages?.[targetId] : undefined
   if (!message) {
-    return reply(c, 'チェックするメッセージを読み取れませんでした。')
+    return reply(c, text.unreadableMessage)
   }
   // 他人の文章を社外（Cloudflare・TypeSafe AI）に送らないため、自分の投稿だけを対象にする。
   if (message.author?.id !== user.id) {
-    return reply(c, '自分が投稿したメッセージだけチェックできます。')
+    return reply(c, text.notOwnMessage)
   }
-  const text = (message.content ?? '').trim()
-  if (!text) {
-    return reply(c, '本文のないメッセージはチェックできません（画像だけの投稿など）。')
+  const content = (message.content ?? '').trim()
+  if (!content) {
+    return reply(c, text.noText)
   }
-  if (text.length < MIN_LENGTH || text.length > MAX_LENGTH) {
-    return reply(c, '10〜3,000文字のメッセージだけチェックできます。')
+  if (content.length < MIN_LENGTH || content.length > MAX_LENGTH) {
+    return reply(c, text.length)
   }
 
   const apiKey = c.env?.JEV_API_KEY
   const rateLimiter = c.env?.RATE_LIMITER
   if (!apiKey || !rateLimiter) {
-    return reply(c, '判定サービスの設定が完了していません。')
+    return reply(c, text.notConfigured)
   }
   // 画面の API（IP ごと）とは別に、Discord のユーザーごとに数える。上限は同じ 10回/分。
   let allowed: boolean
   try {
     allowed = (await rateLimiter.limit({ key: `xy-discord:${user.id}` })).success
   } catch {
-    return reply(c, '判定サービスに接続できません。時間をおいてお試しください。')
+    return reply(c, errors.rateLimiterDown)
   }
   if (!allowed) {
-    return reply(c, '利用が集中しています。1分ほど待ってから、もう一度お試しください。')
+    return reply(c, errors.busy)
   }
 
   // Discord には3秒以内に応答する必要があり、判定（最大20秒）を待てない。
   // 先に「考え中」を返し、判定は応答後に続ける（waitUntil は応答後30秒まで動ける）。
-  c.executionCtx.waitUntil(completeCheck(interaction, apiKey, text))
+  c.executionCtx.waitUntil(completeCheck(interaction, apiKey, content, locale))
   return c.json({
     type: CallbackType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
     data: { flags: EPHEMERAL },

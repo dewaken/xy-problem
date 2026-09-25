@@ -12,24 +12,30 @@
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="/" aria-label="XY問題チェッカー ホーム">
+      <a class="brand" href="/" aria-label="XY問題チェッカー ホーム" data-i18n-attr="aria-label:brandHome">
         <span class="brand-mark" aria-hidden="true">x<span>y</span></span>
-        XY問題チェッカー
+        <span data-i18n="brand">XY問題チェッカー</span>
       </a>
-      <a class="about-link" href="#about">XY問題とは <span aria-hidden="true">↓</span></a>
+      <div class="header-actions">
+        <div class="lang-switch" role="group" aria-label="表示言語 / Language">
+          <button type="button" data-lang="ja" lang="ja" aria-label="日本語" aria-pressed="true">JA</button>
+          <button type="button" data-lang="en" lang="en" aria-label="English" aria-pressed="false">EN</button>
+        </div>
+        <a class="about-link" href="#about"><span data-i18n="aboutLink">XY問題とは</span> <span aria-hidden="true">↓</span></a>
+      </div>
     </header>
 
     <main>
       <section class="intro" aria-labelledby="page-title">
         <div class="intro-copy">
-          <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span>質問を送る前の、セルフチェック</p>
-          <h1 id="page-title">問いを、<br /><span>ひとつ手前から。</span></h1>
-          <p class="lead">
+          <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span><span data-i18n="eyebrow">質問を送る前の、セルフチェック</span></p>
+          <h1 id="page-title" data-i18n-html="heroTitle">問いを、<br /><span>ひとつ手前から。</span></h1>
+          <p class="lead" data-i18n-html="lead">
             質問に「起きている問題」と「実現したいこと」が書かれているかをAIが読み取り、<br class="wide-break" />
             XY問題になっていないかをチェックします。
           </p>
         </div>
-        <figure class="concept" role="img" aria-label="Xは本来の目的、Yは思いついた手段。手段から目的へ立ち戻って考える。">
+        <figure class="concept" role="img" aria-label="Xは本来の目的、Yは思いついた手段。手段から目的へ立ち戻って考える。" data-i18n-attr="aria-label:conceptLabel">
           <svg viewBox="0 0 360 250" aria-hidden="true" focusable="false">
             <defs>
               <marker id="arrow-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -41,24 +47,24 @@
             <circle class="node-x" cx="92" cy="112" r="54" />
             <circle class="node-y" cx="270" cy="112" r="54" />
             <text class="node-letter" x="92" y="120" text-anchor="middle">X</text>
-            <text class="node-label" x="92" y="142" text-anchor="middle">本来の目的</text>
+            <text class="node-label" x="92" y="142" text-anchor="middle" data-i18n="conceptX">本来の目的</text>
             <text class="node-letter node-letter-y" x="270" y="120" text-anchor="middle">Y</text>
-            <text class="node-label node-label-y" x="270" y="142" text-anchor="middle">思いついた手段</text>
+            <text class="node-label node-label-y" x="270" y="142" text-anchor="middle" data-i18n="conceptY">思いついた手段</text>
             <path class="concept-line" d="M158 112 H204" marker-end="url(#arrow-head)" />
             <path class="concept-return" d="M252 170 C 232 228, 132 228, 110 172" marker-end="url(#arrow-head)" />
-            <text class="concept-caption" x="181" y="244" text-anchor="middle">ここに立ち戻ってみる</text>
+            <text class="concept-caption" x="181" y="244" text-anchor="middle" data-i18n="conceptCaption">ここに立ち戻ってみる</text>
           </svg>
         </figure>
       </section>
 
-      <section class="workspace" aria-label="質問をチェックする">
+      <section class="workspace" aria-label="質問をチェックする" data-i18n-attr="aria-label:workspaceLabel">
         <div class="editor-card">
           <form id="analyze-form">
             <div class="section-heading">
               <span class="step-number" aria-hidden="true">01</span>
-              <h2>質問を書く</h2>
+              <h2 data-i18n="step1">質問を書く</h2>
             </div>
-            <label class="input-label" for="question">質問や相談を、そのまま貼り付けてください。</label>
+            <label class="input-label" for="question" data-i18n="inputLabel">質問や相談を、そのまま貼り付けてください。</label>
             <textarea
               id="question"
               name="question"
@@ -66,27 +72,28 @@
               maxlength="3000"
               required
               placeholder="例：文字列の最後の3文字を取り出す方法を教えてください。"
+              data-i18n-attr="placeholder:placeholder"
               aria-describedby="input-hint character-count"
               aria-keyshortcuts="Control+Enter Meta+Enter"
             ></textarea>
             <div class="input-meta">
-              <span id="input-hint">起きていること・実現したいこと・試したことを書くと、伝わりやすくなります。</span>
+              <span id="input-hint" data-i18n="inputHint">起きていること・実現したいこと・試したことを書くと、伝わりやすくなります。</span>
               <span id="character-count">0 / 3,000</span>
             </div>
             <div class="examples">
-              <span class="examples-label">例文で試す</span>
-              <button type="button" data-example="technical">開発の質問</button>
-              <button type="button" data-example="infra">インフラの相談</button>
-              <button type="button" data-example="infraRevised">インフラの相談（書き直し後）</button>
+              <span class="examples-label" data-i18n="examplesLabel">例文で試す</span>
+              <button type="button" data-example="technical" data-i18n="exTechnical">開発の質問</button>
+              <button type="button" data-example="infra" data-i18n="exInfra">インフラの相談</button>
+              <button type="button" data-example="infraRevised" data-i18n="exInfraRevised">インフラの相談（書き直し後）</button>
             </div>
             <div class="submit-row">
-              <p class="privacy-note">入力内容は判定のためCloudflare・TypeSafe AIに送信されます。このアプリでは履歴を保存しません。</p>
+              <p class="privacy-note" data-i18n="privacy">入力内容は判定のためCloudflare・TypeSafe AIに送信されます。このアプリでは履歴を保存しません。</p>
               <div class="submit-action">
                 <button class="primary-button" id="submit-button" type="submit">
                   <span id="button-label">チェックする</span>
                   <span class="button-icon" aria-hidden="true">→</span>
                 </button>
-                <span class="kbd-hint" aria-hidden="true"><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>Enter</kbd> でも送信</span>
+                <span class="kbd-hint" aria-hidden="true" data-i18n-html="kbdHint"><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>Enter</kbd> でも送信</span>
               </div>
             </div>
             <p id="error" class="error-message" role="alert" hidden></p>
@@ -96,32 +103,32 @@
         <div class="result-card" id="result-card" aria-busy="false">
           <div class="section-heading">
             <span class="step-number" aria-hidden="true">02</span>
-            <h2>回答する人からの見え方</h2>
+            <h2 data-i18n="step2">回答する人からの見え方</h2>
           </div>
 
           <div id="empty-state" class="empty-state">
-            <p class="empty-title">文章から、次の3つを読み取ります。</p>
+            <p class="empty-title" data-i18n="emptyTitle">文章から、次の3つを読み取ります。</p>
             <ol class="checkpoints">
               <li>
                 <span class="checkpoint-number" aria-hidden="true">1</span>
-                <div><b>実際に起きている問題</b><span>エラーが出る、表示されない、遅いなど、いま起きていること</span></div>
+                <div><b data-i18n="cp1Title">実際に起きている問題</b><span data-i18n="cp1Body">エラーが出る、表示されない、遅いなど、いま起きていること</span></div>
               </li>
               <li>
                 <span class="checkpoint-number" aria-hidden="true">2</span>
-                <div><b>最終的に実現したいこと</b><span>それができると、何ができるようになるのか</span></div>
+                <div><b data-i18n="cp2Title">最終的に実現したいこと</b><span data-i18n="cp2Body">それができると、何ができるようになるのか</span></div>
               </li>
               <li>
                 <span class="checkpoint-number" aria-hidden="true">3</span>
-                <div><b>試したこと・切り分けの結果</b><span>確認して、原因ではないと分かったこと</span></div>
+                <div><b data-i18n="cp3Title">試したこと・切り分けの結果</b><span data-i18n="cp3Body">確認して、原因ではないと分かったこと</span></div>
               </li>
             </ol>
-            <p class="empty-note">1と2がどちらも読み取れないと、XY問題の疑いが高くなります。</p>
+            <p class="empty-note" data-i18n="emptyNote">1と2がどちらも読み取れないと、XY問題の疑いが高くなります。</p>
           </div>
 
           <div id="loading-state" class="loading-state" hidden>
             <span class="spinner" aria-hidden="true"></span>
-            <p class="loading-title">文章を読み取っています</p>
-            <p>起きている問題、実現したいこと、試したことを確認しています。</p>
+            <p class="loading-title" data-i18n="loadingTitle">文章を読み取っています</p>
+            <p data-i18n="loadingBody">起きている問題、実現したいこと、試したことを確認しています。</p>
           </div>
 
           <div id="result" class="result" hidden>
@@ -134,26 +141,26 @@
             </div>
 
             <div id="missing" class="missing">
-              <h4>この文章に書かれていないこと</h4>
+              <h4 data-i18n="missingTitle">この文章に書かれていないこと</h4>
               <ul id="missing-list"></ul>
               <div class="missing-footer">
-                <p>書き足すと、的確な回答をもらいやすくなります。</p>
-                <button type="button" id="add-headings" class="ghost-button">入力欄に項目を追加</button>
+                <p data-i18n="missingFooter">書き足すと、的確な回答をもらいやすくなります。</p>
+                <button type="button" id="add-headings" class="ghost-button" data-i18n="addHeadings">入力欄に項目を追加</button>
               </div>
             </div>
 
             <div class="elements">
-              <h4 class="block-heading">読み取った要素</h4>
-              <p class="block-note">%は、その要素が文章に書かれているとAIが推定した確率です。</p>
+              <h4 class="block-heading" data-i18n="elementsTitle">読み取った要素</h4>
+              <p class="block-note" data-i18n="elementsNote">%は、その要素が文章に書かれているとAIが推定した確率です。</p>
               <ul id="signals" class="signals"></ul>
             </div>
 
             <div class="follow-up">
-              <h4 class="block-heading">回答する人から、こう聞き返されそうです</h4>
+              <h4 class="block-heading" data-i18n="followUpTitle">回答する人から、こう聞き返されそうです</h4>
               <ul id="follow-up-questions"></ul>
             </div>
 
-            <p class="result-note">判定は、上の要素の組み合わせから決めています。%は各要素についてのAIの推定確率で、判定の正解率ではありません。聞き返しの質問は、欠けている要素に対応する定型文です。</p>
+            <p class="result-note" data-i18n="resultNote">判定は、上の要素の組み合わせから決めています。%は各要素についてのAIの推定確率で、判定の正解率ではありません。聞き返しの質問は、欠けている要素に対応する定型文です。</p>
           </div>
 
           <p id="live-status" class="sr-only" role="status" aria-live="polite"></p>
@@ -162,29 +169,29 @@
 
       <section id="about" class="about-section" aria-labelledby="about-title">
         <div class="about-copy">
-          <p class="eyebrow">XY問題とは</p>
-          <h2 id="about-title">「どうやるか」の前に、<br />「何をしたいか」。</h2>
-          <p>本当は <strong>X を解決したい</strong>のに、自分で思いついた手段 <strong>Y のやり方だけを質問してしまう</strong>。それがXY問題です。回答する人は Y についてしか答えられないため、X が解決しないまま、やり取りだけが長くなりがちです。</p>
-          <p>このチェッカーは質問の良し悪しを採点するものではありません。送る前に、目的と状況が相手に伝わるかを確かめるためのものです。</p>
+          <p class="eyebrow" data-i18n="aboutEyebrow">XY問題とは</p>
+          <h2 id="about-title" data-i18n-html="aboutTitle">「どうやるか」の前に、<br />「何をしたいか」。</h2>
+          <p data-i18n-html="aboutP1">本当は <strong>X を解決したい</strong>のに、自分で思いついた手段 <strong>Y のやり方だけを質問してしまう</strong>。それがXY問題です。回答する人は Y についてしか答えられないため、X が解決しないまま、やり取りだけが長くなりがちです。</p>
+          <p data-i18n="aboutP2">このチェッカーは質問の良し悪しを採点するものではありません。送る前に、目的と状況が相手に伝わるかを確かめるためのものです。</p>
         </div>
         <figure class="about-example">
-          <figcaption>よくある例</figcaption>
+          <figcaption data-i18n="exampleCaption">よくある例</figcaption>
           <div class="example-row example-y">
-            <span class="example-tag"><b>Y</b> 聞いたこと</span>
-            <p>文字列の最後の3文字を取り出す方法を教えてください。</p>
+            <span class="example-tag"><b>Y</b> <span data-i18n="exampleYTag">聞いたこと</span></span>
+            <p data-i18n="exampleYText">文字列の最後の3文字を取り出す方法を教えてください。</p>
           </div>
           <div class="example-row example-x">
-            <span class="example-tag"><b>X</b> 本当にしたかったこと</span>
-            <p>ファイル名から、拡張子を知りたい。</p>
+            <span class="example-tag"><b>X</b> <span data-i18n="exampleXTag">本当にしたかったこと</span></span>
+            <p data-i18n="exampleXText">ファイル名から、拡張子を知りたい。</p>
           </div>
-          <p class="example-note">「最後の3文字」では、<code>photo.jpeg</code> のような4文字の拡張子を正しく取り出せません。目的が分かれば、回答する人は拡張子を取り出すための方法を教えられます。</p>
+          <p class="example-note" data-i18n-html="exampleNote">「最後の3文字」では、<code>photo.jpeg</code> のような4文字の拡張子を正しく取り出せません。目的が分かれば、回答する人は拡張子を取り出すための方法を教えられます。</p>
         </figure>
       </section>
     </main>
 
     <footer>
-      <span class="footer-brand">XY問題チェッカー</span>
-      <span class="footer-tagline">小さな問い直し、大きな前進。</span>
+      <span class="footer-brand" data-i18n="brand">XY問題チェッカー</span>
+      <span class="footer-tagline" data-i18n="footerTagline">小さな問い直し、大きな前進。</span>
     </footer>
   </body>
 </html>

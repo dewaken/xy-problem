@@ -122,6 +122,39 @@ footer {
   color: var(--lime-strong);
   transform: translateY(3px);
 }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* 表示言語の切り替え。今の言語を aria-pressed で示し、押されている方を塗る。 */
+.lang-switch {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffffa0;
+}
+.lang-switch button {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 11px;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.lang-switch button:hover {
+  color: var(--ink);
+}
+.lang-switch button[aria-pressed="true"] {
+  background: var(--green);
+  color: #fff;
+}
 .about-link {
   font-size: 13px;
   font-weight: 500;
@@ -1086,6 +1119,9 @@ a:focus-visible {
     font-size: 12px;
     padding: 6px 12px;
   }
+  .header-actions {
+    gap: 8px;
+  }
   .intro {
     padding: 36px 0 28px;
     display: block;
@@ -1174,6 +1210,12 @@ a:focus-visible {
     flex-direction: column;
     gap: 4px;
     padding-top: 20px;
+  }
+}
+/* 狭い画面では、ロゴと言語の切り替えを優先する。「XY問題とは」はすぐ下のページ内にある。 */
+@media (max-width: 440px) {
+  .about-link {
+    display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -25,6 +25,7 @@ bun run discord:register   # Discord に「XY問題チェック」コマンド�
 - `src/index.ts`：`POST /api/analyze`。前段のチェックを名前付きのミドルウェアとして並べ、`app.post(...)` の引数の順に実行する（本文16KB → 同一オリジン → JSON → 文字数 → 設定 → Rate Limit）。壊れた JSON は Hono の `validator` が `HTTPException(400)` を投げるので、`app.onError` で 400 に変換している。
 - `src/check.ts`：画面の API と Discord で共通の判定処理（Jev の呼び出し → 応答の検証 → 表示用データ）。失敗は利用者向けのメッセージとステータスにして返す。
 - `src/discord.ts`：`POST /discord/interactions`（Discord のメッセージコマンド「XY問題チェック」）。署名を検証し、3秒以内に「考え中」を返してから `waitUntil` で判定し、返信を書き換える。設定の手順は `docs/discord.md`。
+- `src/i18n.ts`：利用者に見せる文言（判定・エラー・Discord）を日本語と英語で持つ。画面の API は `?lang=en`、Discord は利用者の locale で選ぶ。既定は日本語。
 - `src/jev.ts`：Jev の呼び出し（20秒タイムアウト）。失敗は利用者向けのメッセージとステータスだけを持つ `JevError` に変える。ログに入力本文や Jev の生エラーを出さない（本文は伏せる）。
 - `src/analysis.ts`：判定ロジックの本体。
   - `buildInput`：Jev への質問を組み立てる。
@@ -61,7 +62,8 @@ Jev は文章を生成しない。事前に定義した質問と選択肢に対�
 
 - 利用者向けの文言に「Jev」を出さない（「AI」「判定サービス」と書く）。送信先を開示する「Cloudflare・TypeSafe AI に送信」の注記は残す。
 - 総合的な確信度は表示しない。要素の%は3行とも「書かれている可能性」（stated の確率）に揃える。最大確率の選択肢を出すと、行ごとに数値の意味が変わって比べられなくなる（issue #2）。判定の正解率ではないことが画面上で分かるようにする。
-- 「例文で試す」のボタンは、それぞれ別の判定になるようにする（現在は疑いあり／疑いが強い／可能性は低い）。例文を変えたら `scripts/eval-cases.ts` のケースも更新し、eval で判定を確かめる。
+- 「例文で試す」のボタンは、それぞれ別の判定になるようにする（現在は疑いあり／疑いが強い／可能性は低い。英語版も同じ）。例文を変えたら `scripts/eval-cases.ts` のケース（英語は `en-ex-*`）も更新し、eval で判定を確かめる。
+- 表示は日本語と英語。文言を変えたら両方を直す（サーバーの文言は `src/i18n.ts`、画面の日本語は `public/index.html`、画面の英語と動的な文言は `public/app.js`）。
 - 入力履歴や DB は持たない。
 - Discord の返信（`discordMessage`）も、画面と同じ決まりに従う（「Jev」を出さない、送信先を書く、%は3行とも「書かれている可能性」）。
 

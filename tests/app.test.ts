@@ -112,6 +112,34 @@ describe('analysis API', () => {
   })
 })
 
+describe('English (?lang=en)', () => {
+  function postEnglish(body: unknown, bindings = env()) {
+    return app.request('http://localhost/api/analyze?lang=en', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    }, bindings)
+  }
+  it('returns the verdict, elements, and follow-up questions in English', async () => {
+    const result = await (await postEnglish({ text: sample })).json()
+    expect(result.verdict).toBe('strong')
+    expect(result.label).toBe('Strong sign of an XY problem')
+    expect(result.missing.map((m: any) => m.label)).toEqual(['What is actually happening', 'What you ultimately want'])
+    expect(result.elements.map((e: any) => e.label)).toEqual(['What is actually happening', 'What you ultimately want', 'What you have tried or ruled out'])
+    expect(result.questions.at(-1)).toBe('Have you already tried anything, or checked and ruled anything out as the cause?')
+    expect(JSON.stringify(result)).not.toMatch(/[ぁ-んァ-ン一-龥]/)
+  })
+  it('returns input and service errors in English', async () => {
+    expect((await (await postEnglish({ text: 'short' })).json()).error).toBe('Enter 10 to 3,000 characters.')
+    mockFetch({}, 401)
+    expect((await (await postEnglish({ text: sample })).json()).error).toBe('Check the settings of the checking service.')
+  })
+  it('keeps Japanese as the default when lang is missing or unknown', async () => {
+    const response = await app.request('http://localhost/api/analyze?lang=fr', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: sample }),
+    }, env())
+    expect((await response.json()).label).toBe('XY問題の疑いが強い')
+  })
+})
+
 describe('verdict composition', () => {
   async function verdictFor(overrides: Parameters<typeof answers>[0]) {
     mockFetch(fixture(overrides))

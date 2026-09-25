@@ -47,6 +47,7 @@ bun run build
 - `src/index.ts`: Hono API、入力制限、レート制限
 - `src/check.ts`: 画面の API と Discord で共通の判定処理
 - `src/discord.ts`: Discord のメッセージコマンド「XY問題チェック」（設定は `docs/discord.md`）
+- `src/i18n.ts`: 利用者に見せる文言（日本語・英語）
 - `src/jev.ts`: Jev（TypeSafe API）の呼び出し、タイムアウト、エラーの変換
 - `src/analysis.ts`: Jevに渡す質問と選択肢、応答の検証、総合判定の合成
 - `scripts/eval-cases.ts`: 実Jevで判定を確認する評価ケース
