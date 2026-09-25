@@ -23,6 +23,13 @@ const cases: { id: string; text: string; expect: Verdict[] }[] = [
   { id: '13-ops-y', text: 'Excelファイルを毎朝自動でメール添付する方法はありますか？', expect: positive },
   { id: '13-ops-xy', text: 'チームメンバーが毎朝、最新の売上状況を簡単に確認できるようにしたいです。\nExcelをメール添付で自動送信する方法を考えていますが、他に適した方法があれば教えてください。', expect: ['unlikely'] },
   { id: 'ctl-symptom', text: 'Salesforce にアップロードした画像が、社外ユーザーの画面でだけ表示されません。ブラウザの開発者ツールでは画像リクエストが 403 になっています。原因の切り分け方を相談させてください。', expect: ['unlikely'] },
+  // 英語の入力。en-ex-* は英語表示の「例文で試す」と同じ文（日本語の例文と同じ3種類の判定になること）。
+  { id: 'en-ex-technical', text: 'How do I get the last three characters of a string?', expect: ['suspected'] },
+  { id: 'en-ex-infra', text: 'Has anything changed recently in the CDN settings? The cookies set by our bot protection seem to be large. Do you know whether they have always been this size?', expect: ['strong'] },
+  { id: 'en-ex-infra-good', text: 'Images uploaded to Salesforce sometimes fail to load when our site requests them. S3 returns RequestHeaderSectionTooLarge (limit: 8192 bytes). We suspect the total size of the cookies exceeds the header limit, but we have not isolated the cause yet. Could you tell us what we should check?', expect: ['unlikely'] },
+  { id: 'en-13-web-y', text: 'How can I reload a page every 5 seconds with JavaScript?', expect: positive },
+  { id: 'en-13-web-xy', text: 'When data on the server is updated, I want the latest information to appear on the screen without users reloading the page.\nI am thinking of reloading every 5 seconds, but is there a better way to implement this?', expect: ['unlikely'] },
+  { id: 'en-6', text: 'We will need to know which paths you want to point to which domains.', expect: ['unlikely'] },
 ]
 
 const key = process.env.TYPESAFE_API_KEY

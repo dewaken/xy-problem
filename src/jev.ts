@@ -4,10 +4,13 @@ const endpoint = 'https://api.typesafe.ai/v1/systemone'
 // ブラウザ側（public/app.js）の25秒より短くし、利用者には「時間がかかっています」をサーバーから返す。
 const timeoutMs = 20_000
 
-// 利用者に返してよいメッセージとステータスだけを持つ。Jev の生のエラー内容は含めない。
+// 失敗の種類。利用者向けの文言は、言語に合わせて src/check.ts で選ぶ。
+export type JevFailure = 'config' | 'upstream' | 'timeout' | 'failed'
+
+// 利用者に返してよいステータスと失敗の種類だけを持つ。Jev の生のエラー内容は含めない。
 export class JevError extends Error {
-  constructor(readonly status: 502 | 503 | 504, message: string) {
-    super(message)
+  constructor(readonly status: 502 | 503 | 504, readonly failure: JevFailure) {
+    super(failure)
   }
 }
 
@@ -32,18 +35,18 @@ export async function askJev(apiKey: string, text: string): Promise<unknown> {
     const upstream = await Promise.race([request, timeout])
     if (upstream.status === 401 || upstream.status === 403) {
       console.error('[jev] upstream rejected request', { status: upstream.status })
-      throw new JevError(503, '判定サービスの設定を確認してください。')
+      throw new JevError(503, 'config')
     }
     if (!upstream.ok) {
       console.error('[jev] upstream rejected request', { status: upstream.status })
-      throw new JevError(502, '判定サービスに接続できませんでした。時間をおいてお試しください。')
+      throw new JevError(502, 'upstream')
     }
     return await upstream.json()
   } catch (error) {
     if (error instanceof JevError) throw error
-    if (controller.signal.aborted) throw new JevError(504, '応答に時間がかかっています。少し待ってからお試しください。')
+    if (controller.signal.aborted) throw new JevError(504, 'timeout')
     logFailure(error, text)
-    throw new JevError(502, '判定を取得できませんでした。時間をおいてもう一度お試しください。')
+    throw new JevError(502, 'failed')
   } finally {
     clearTimeout(timer)
   }

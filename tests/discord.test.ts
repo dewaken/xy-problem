@@ -193,6 +193,23 @@ describe('Discord interactions', () => {
     expect((await response.json()).data.content).toBe('利用が集中しています。1分ほど待ってから、もう一度お試しください。')
   })
 
+  it('replies in English when the Discord client is set to English', async () => {
+    const refused = await send({ ...commandInteraction({ author: someoneElse }), locale: 'en-US' })
+    expect((await refused.response.json()).data.content).toBe('You can only check messages you posted yourself.')
+
+    const fetchRequest = mockFetch()
+    const { settle } = await send({ ...commandInteraction(), locale: 'en-US' })
+    await settle()
+    const edited = JSON.parse(String(fetchRequest.mock.calls[1][1]?.body))
+    expect(edited.embeds[0].title).toBe('Possible XY problem')
+    expect(edited.embeds[0].footer.text).toContain('Cloudflare and TypeSafe AI')
+  })
+
+  it('replies in Japanese when the Discord client is set to Japanese', async () => {
+    const { response } = await send({ ...commandInteraction({ author: someoneElse }), locale: 'ja' })
+    expect((await response.json()).data.content).toBe('自分が投稿したメッセージだけチェックできます。')
+  })
+
   it('rejects other interactions', async () => {
     const { response } = await send({ ...commandInteraction(), data: { type: 1, name: 'other' } })
     expect(response.status).toBe(400)
@@ -216,7 +233,7 @@ describe('discordMessage', () => {
   }
 
   it('labels every percentage as the probability of being written, and names where the text was sent', () => {
-    const embed = discordMessage(analysis).embeds[0]
+    const embed = discordMessage(analysis, 'ja').embeds[0]
     const elements = embed.fields.find((field) => field.name === '読み取った要素')?.value.split('\n') ?? []
     expect(elements).toHaveLength(3)
     for (const row of elements) expect(row).toMatch(/書かれている可能性 \d+%$/)
@@ -225,11 +242,19 @@ describe('discordMessage', () => {
   })
 
   it('links the title to the message when a URL is given', () => {
-    expect(discordMessage(analysis, 'https://discord.com/channels/1/2/3').embeds[0].url).toBe('https://discord.com/channels/1/2/3')
+    expect(discordMessage(analysis, 'ja', 'https://discord.com/channels/1/2/3').embeds[0].url).toBe('https://discord.com/channels/1/2/3')
+  })
+
+  it('labels every percentage as the probability of being written in English too', () => {
+    const embed = discordMessage(analysis, 'en').embeds[0]
+    const elements = embed.fields.find((field) => field.name === 'What we read')?.value.split('\n') ?? []
+    expect(elements).toHaveLength(3)
+    for (const row of elements) expect(row).toMatch(/\d+% likely to be written$/)
+    expect(JSON.stringify(embed)).not.toContain('Jev')
   })
 
   it('uses the neutral color for the not-request verdict', () => {
-    const excluded = discordMessage({ ...analysis, verdict: 'unlikely', excluded: true, missing: [], questions: [] }).embeds[0]
+    const excluded = discordMessage({ ...analysis, verdict: 'unlikely', excluded: true, missing: [], questions: [] }, 'ja').embeds[0]
     expect(excluded.color).toBe(0x9aa293)
     expect(excluded.fields.map((field) => field.name)).toEqual(['読み取った要素'])
   })
